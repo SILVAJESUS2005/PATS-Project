@@ -1,47 +1,10 @@
-<template>
-  <div class="registro-container">
-    <h2>Crear tu cuenta</h2>
-    
-    <form @submit.prevent="procesarRegistro">
-      <div v-if="mensajeExito" class="alerta-exito">{{ mensajeExito }}</div>
-
-      <div class="campo">
-        <label>Nombre</label>
-        <input type="text" v-model="formulario.nombre" />
-        <span class="error" v-if="errores.nombre">{{ errores.nombre }}</span>
-      </div>
-
-      <div class="campo">
-        <label>Apellidos</label>
-        <input type="text" v-model="formulario.apellidos" />
-        <span class="error" v-if="errores.apellidos">{{ errores.apellidos }}</span>
-      </div>
-
-      <div class="campo">
-        <label>Correo electrónico</label>
-        <input type="email" v-model="formulario.correo" />
-        <span class="error" v-if="errores.correo">{{ errores.correo }}</span>
-      </div>
-
-      <div class="campo">
-        <label>Contraseña</label>
-        <input type="password" v-model="formulario.password" />
-        <span class="error" v-if="errores.password">{{ errores.password }}</span>
-      </div>
-
-      <div class="campo">
-        <label>Confirmar contraseña</label>
-        <input type="password" v-model="formulario.confirmarPassword" />
-        <span class="error" v-if="errores.confirmarPassword">{{ errores.confirmarPassword }}</span>
-      </div>
-
-      <button type="submit">Registrarse</button>
-    </form>
-  </div>
-</template>
-
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AuthLayout from '../components/AuthLayout.vue'
+import AuthInput from '../components/AuthInput.vue'
+
+const router = useRouter()
 
 // Estado del formulario
 const formulario = ref({
@@ -50,76 +13,171 @@ const formulario = ref({
   correo: '',
   password: '',
   confirmarPassword: ''
-});
+})
 
 // Estado de errores y mensajes
-const errores = ref({});
-const mensajeExito = ref('');
+const errores = ref({})
+const mensajeExito = ref('')
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 // Función de Validación en el Cliente
 const validarCliente = () => {
-  errores.value = {}; // Limpiar errores
-  let esValido = true;
+  errores.value = {}
+  let esValido = true
 
-  if (!formulario.value.nombre) { errores.value.nombre = 'El nombre es requerido'; esValido = false; }
-  if (!formulario.value.apellidos) { errores.value.apellidos = 'Los apellidos son requeridos'; esValido = false; }
+  if (!formulario.value.nombre) { errores.value.nombre = 'El nombre es requerido'; esValido = false }
+  if (!formulario.value.apellidos) { errores.value.apellidos = 'Los apellidos son requeridos'; esValido = false }
   
-  // Validación de formato de email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!formulario.value.correo) { 
-    errores.value.correo = 'El correo es requerido'; 
-    esValido = false; 
+    errores.value.correo = 'El correo es requerido'
+    esValido = false
   } else if (!emailRegex.test(formulario.value.correo)) {
-    errores.value.correo = 'Ingresa un correo electrónico válido';
-    esValido = false;
+    errores.value.correo = 'Ingresa un correo electrónico válido'
+    esValido = false
   }
 
-  if (!formulario.value.password) { errores.value.password = 'La contraseña es requerida'; esValido = false; }
+  if (!formulario.value.password) { errores.value.password = 'La contraseña es requerida'; esValido = false }
   
   if (formulario.value.password !== formulario.value.confirmarPassword) {
-    errores.value.confirmarPassword = 'Las contraseñas no coinciden';
-    esValido = false;
+    errores.value.confirmarPassword = 'Las contraseñas no coinciden'
+    esValido = false
   }
 
-  return esValido;
-};
+  return esValido
+}
 
-// Procesamiento y envío al Backend
+// Procesamiento y envío (Mock)
 const procesarRegistro = async () => {
-  if (!validarCliente()) return; // Si falla en el cliente, no enviamos al servidor
+  if (!validarCliente()) return
+  
+  isLoading.value = true
+  errorMessage.value = ''
+  mensajeExito.value = ''
 
   try {
-    const respuesta = await fetch('http://localhost:8080/api/auth/registro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre: formulario.value.nombre,
-        apellidos: formulario.value.apellidos,
-        correo: formulario.value.correo,
-        password: formulario.value.password
-      })
-    });
-
-    const data = await respuesta.json();
-
-    if (!respuesta.ok) {
-      // Capturamos los errores dinámicos del servidor (Spring Boot)
-      errores.value = data; 
-    } else {
-      mensajeExito.value = data.mensaje;
-      // Limpiar formulario tras éxito
-      formulario.value = { nombre: '', apellidos: '', correo: '', password: '', confirmarPassword: '' };
+    // ---------------------------------------------------------
+    // TODO: CUANDO EL BACKEND ESTÉ LISTO, REEMPLAZA ESTE BLOQUE:
+    // ---------------------------------------------------------
+    // Inicio de la simulación
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // Simulamos que el correo ya existe para mostrar un error del backend
+    if (formulario.value.correo === 'admin@pats.com') {
+      errores.value = { correo: 'Este correo ya está registrado' }
+      throw new Error('Error de validación del servidor')
     }
+
+    // Registro exitoso simulado
+    mensajeExito.value = '¡Cuenta creada exitosamente! Redirigiendo al login...'
+    
+    // Limpiamos y redirigimos después de 2 segundos
+    setTimeout(() => {
+      formulario.value = { nombre: '', apellidos: '', correo: '', password: '', confirmarPassword: '' }
+      router.push('/login')
+    }, 2000)
+    // Fin de la simulación
+    // ---------------------------------------------------------
+    // Y PON ESTO EN SU LUGAR:
+    // const respuesta = await fetch('http://localhost:8080/api/auth/registro', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     nombre: formulario.value.nombre,
+    //     apellidos: formulario.value.apellidos,
+    //     correo: formulario.value.correo,
+    //     password: formulario.value.password
+    //   })
+    // })
+    // const data = await respuesta.json()
+    // if (!respuesta.ok) {
+    //   errores.value = data // Spring Boot enviará los errores por campo aquí
+    //   throw new Error('Error al registrar')
+    // }
+    // mensajeExito.value = data.mensaje || 'Cuenta creada exitosamente'
+    // setTimeout(() => router.push('/login'), 2000)
+    // ---------------------------------------------------------
+
   } catch (error) {
-    console.error('Error de conexión:', error);
+    if (!errores.value.correo) { // Si el error no es de un campo específico
+      errorMessage.value = error.message
+    }
+  } finally {
+    isLoading.value = false
   }
-};
+}
 </script>
 
-<style scoped>
-.campo { margin-bottom: 15px; }
-.campo input { width: 100%; padding: 8px; margin-top: 5px; }
-.error { color: red; font-size: 0.85em; display: block; margin-top: 5px; }
-.alerta-exito { background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; }
-button { width: 100%; padding: 10px; background-color: black; color: white; cursor: pointer; }
-</style>
+<template>
+  <AuthLayout 
+    title="Crea tu cuenta" 
+    altText="¿Ya tienes cuenta?" 
+    altLinkText="Inicia sesión aquí" 
+    altLinkTo="/login"
+  >
+    
+    <!-- Alertas -->
+    <div v-if="mensajeExito" class="mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-md">
+      <p class="text-sm text-green-700">{{ mensajeExito }}</p>
+    </div>
+    
+    <div v-if="errorMessage" class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+      <p class="text-sm text-red-700">{{ errorMessage }}</p>
+    </div>
+
+    <form class="space-y-4" @submit.prevent="procesarRegistro">
+      
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <AuthInput 
+          id="nombre" 
+          label="Nombre" 
+          v-model="formulario.nombre" 
+          :errorMessage="errores.nombre"
+        />
+        <AuthInput 
+          id="apellidos" 
+          label="Apellidos" 
+          v-model="formulario.apellidos" 
+          :errorMessage="errores.apellidos"
+        />
+      </div>
+
+      <AuthInput 
+        id="correo" 
+        label="Correo Electrónico" 
+        type="email" 
+        placeholder="ejemplo@correo.com" 
+        v-model="formulario.correo" 
+        :errorMessage="errores.correo"
+      />
+
+      <AuthInput 
+        id="password" 
+        label="Contraseña" 
+        type="password" 
+        v-model="formulario.password" 
+        :errorMessage="errores.password"
+      />
+
+      <AuthInput 
+        id="confirmarPassword" 
+        label="Confirmar Contraseña" 
+        type="password" 
+        v-model="formulario.confirmarPassword" 
+        :errorMessage="errores.confirmarPassword"
+      />
+
+      <div class="pt-2">
+        <button 
+          type="submit" 
+          :disabled="isLoading || mensajeExito"
+          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span v-if="isLoading">Procesando...</span>
+          <span v-else>Registrarse</span>
+        </button>
+      </div>
+    </form>
+  </AuthLayout>
+</template>
