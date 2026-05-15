@@ -20,7 +20,18 @@ watch(() => route.path, () => {
   }
 }, { immediate: true })
 
-const cerrarSesion = () => {
+const cerrarSesion = async () => {
+  try {
+    // Le avisamos al backend que destruya la sesión (HttpSession)
+    await fetch('http://localhost:8080/api/auth/logout', {
+      method: 'GET',
+      credentials: 'include' // Enviamos la cookie para que sepa quién está cerrando sesión
+    })
+  } catch (error) {
+    console.error("Error al cerrar sesión en el servidor", error)
+  }
+
+  // Limpiamos la sesión del frontend
   localStorage.removeItem('auth_token')
   localStorage.removeItem('user_name')
   isAuth.value = false

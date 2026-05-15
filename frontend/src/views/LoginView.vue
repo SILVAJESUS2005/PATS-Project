@@ -21,30 +21,27 @@ const realizarLogin = async () => {
   
   try {
     // ---------------------------------------------------------
-    // TODO: CUANDO EL BACKEND ESTÉ LISTO, REEMPLAZA ESTE BLOQUE:
+    // CONEXIÓN REAL AL BACKEND:
     // ---------------------------------------------------------
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    if (loginForm.email === 'admin@pats.com' && loginForm.password === '1234') {
-      localStorage.setItem('auth_token', 'mock-token-xyz-789')
-      localStorage.setItem('user_name', 'Administrador')
-      router.push('/dashboard')
-    } else {
-      throw new Error('Credenciales incorrectas. (Prueba con admin@pats.com y 1234)')
+    const response = await fetch('http://localhost:8080/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo: loginForm.email, password: loginForm.password }),
+      credentials: 'include' // VITAL: Permite que Spring Boot guarde su Cookie de Sesión
+    })
+
+    if (!response.ok) {
+      // Si recibimos un 401 Unauthorized u otro error
+      throw new Error('Credenciales incorrectas o el usuario no existe.')
     }
-    // Fin del bloque a borrar
-    // ---------------------------------------------------------
-    // Y PON ESTO EN SU LUGAR:
-    // const response = await fetch('http://localhost:8080/api/login', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ email: loginForm.email, password: loginForm.password })
-    // })
-    // if (!response.ok) throw new Error('Credenciales incorrectas')
-    // const data = await response.json()
-    // localStorage.setItem('auth_token', data.token)
-    // localStorage.setItem('user_name', data.nombre)
-    // router.push('/dashboard')
+    
+    const data = await response.json()
+    
+    // Guardamos un identificador local (en el futuro esto podría ser el JWT)
+    localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
+    localStorage.setItem('user_name', data.nombre)
+    
+    router.push('/dashboard')
     // ---------------------------------------------------------
 
   } catch (error) {
