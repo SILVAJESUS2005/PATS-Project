@@ -10,11 +10,20 @@ import pats_backend.dto.RegistroUsuarioDTO;
 
 import java.util.HashMap;
 import java.util.Map;
+import jakarta.servlet.http.HttpSession;
+import pats_backend.model.Usuario;
+import pats_backend.repository.UsuarioRepository;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*") // Permite que Vue.js se conecte
 public class AuthController {
+    private final UsuarioRepository usuarioRepository;
+
+    public AuthController(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
 
     @PostMapping("/registro")
     public ResponseEntity<?> registrarUsuario(@Valid @RequestBody RegistroUsuarioDTO registroDTO, BindingResult result) {
@@ -42,17 +51,43 @@ public class AuthController {
 
 
     }
+
+    // Metodo inicio sesion
+    // Si las credenciales son correctas, se guarda el usuario en una sesión
+    // usando HttpSession para que el servidor recuerde quién inició sesión.
     @PostMapping("/login")
-    public ResponseEntity<?> iniciarSesion(@RequestBody LoginDTO loginDTO) {
-        // Simulación de validación (Más adelante usarás la base de datos)
-        if ("admin@pats.com".equals(loginDTO.getCorreo()) && "123456".equals(loginDTO.getPassword())) {
-            Map<String, String> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Bienvenido a PATS");
-            respuesta.put("rol", "ALUMNO"); // Dato simulado del PDF
-            return ResponseEntity.ok(respuesta);
+    public ResponseEntity<?> iniciarSesion(@RequestBody LoginDTO loginDTO, HttpSession session) {
+
+        Optional<Usuario> usuarioOptional = usuarioRepository.findByCorreo(loginDTO.getCorreo());
+
+        if (usuarioOptional.isPresent()) {
+
+            Usuario usuarioEncontrado = usuarioOptional.get();
+
+            if (usuarioEncontrado.getPassword().equals(loginDTO.getPassword())) {
+
+                // Guardar usuario en sesión
+                session.setAttribute("usuario", usuarioEncontrado);
+
+                Map<String, String> respuesta = new HashMap<>();
+                respuesta.put("mensaje", "Bienvenido a PATS");
+                respuesta.put("nombre", usuarioEncontrado.getNombre());
+                respuesta.put("correo", usuarioEncontrado.getCorreo());
+                respuesta.put("rol", usuarioEncontrado.getRol());
+
+                return ResponseEntity.ok(respuesta);
+            }
         }
 
         return ResponseEntity.status(401).body("Correo o contraseña incorrectos");
     }
+    @GetMapping("/logout")
+    public ResponseEntity<?> cerrarSesion(HttpSession session) {
+        session.invalidate();
 
+        Map<String, String> respuesta = new HashMap<>();
+        respuesta.put("mensaje", "Sesión cerrada correctamente");
+
+        return ResponseEntity.ok(respuesta);
+    }
 }
