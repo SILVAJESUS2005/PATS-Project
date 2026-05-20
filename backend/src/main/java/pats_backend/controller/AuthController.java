@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*") // Permite que Vue.js se conecte
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true") // Configuración de CORS segura para Vue
 public class AuthController {
     private final UsuarioRepository usuarioRepository;
 
@@ -40,8 +40,17 @@ public class AuthController {
 
 
 
-        // 2. Aquí iría tu lógica para guardar en Base de Datos (Service)
-        // authService.registrarNuevoUsuario(registroDTO);
+        // 2. Guardar en Base de Datos (usando el repositorio inyectado)
+        Usuario nuevoUsuario = new Usuario();
+        nuevoUsuario.setNombre(registroDTO.getNombre());
+        // Asumiendo que el modelo Usuario no tiene apellidos, si no lo tiene, omitimos o concatenamos
+        // ¡Ojo! El DTO tiene apellidos pero el Modelo Usuario solo tiene nombre. Los concatenaremos:
+        nuevoUsuario.setNombre(registroDTO.getNombre() + " " + registroDTO.getApellidos());
+        nuevoUsuario.setCorreo(registroDTO.getCorreo());
+        nuevoUsuario.setPassword(registroDTO.getPassword());
+        nuevoUsuario.setRol("USER"); // Rol por defecto
+        
+        usuarioRepository.save(nuevoUsuario);
 
         // 3. Respuesta de éxito
         Map<String, String> respuesta = new HashMap<>();

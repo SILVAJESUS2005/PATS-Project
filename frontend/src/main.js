@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router' // Importamos la configuración que acabas de hacer
+import './assets/main.css' // Importar los estilos (Tailwind)
 
 const app = createApp(App)
 

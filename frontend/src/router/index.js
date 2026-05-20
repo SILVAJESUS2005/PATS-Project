@@ -15,8 +15,31 @@ const router = createRouter({
         path: '/login',
         name: 'login',
         component: () => import('../views/LoginView.vue')
+    },
+    {
+        path: '/dashboard',
+        name: 'dashboard',
+        component: () => import('../views/DashboardView.vue'),
+        meta: { requiresAuth: true } // Esta etiqueta es para proteger la ruta
     }
 ]
+})
+
+// === EL GUARDIA DE NAVEGACIÓN (Protección de Rutas) ===
+router.beforeEach((to, from, next) => {
+  // Verificamos si la ruta a la que quiere ir el usuario requiere autenticación
+  const requiereAutenticacion = to.matched.some(record => record.meta.requiresAuth)
+  
+  // Leemos si existe nuestro token falso en el almacenamiento local
+  const token = localStorage.getItem('auth_token')
+
+  if (requiereAutenticacion && !token) {
+    // Si la página es secreta y NO hay token, lo mandamos al login
+    next('/login')
+  } else {
+    // En cualquier otro caso, lo dejamos pasar libremente
+    next()
+  }
 })
 
 export default router
