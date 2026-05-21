@@ -1,8 +1,11 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '../components/AuthLayout.vue'
 import AuthInput from '../components/AuthInput.vue'
+
+// TODO: Reemplaza con tu Client ID
+const GOOGLE_CLIENT_ID = "294864417020-usltovtittatrqk6rl8d107tqgc6ne3h.apps.googleusercontent.com"
 
 const router = useRouter()
 
@@ -50,6 +53,43 @@ const realizarLogin = async () => {
     isLoading.value = false
   }
 }
+
+const handleGoogleResponse = async (response) => {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const res = await fetch('http://localhost:8080/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: response.credential }),
+      credentials: 'include'
+    })
+
+    if (!res.ok) throw new Error('Error al autenticar con Google')
+    
+    const data = await res.json()
+    localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
+    localStorage.setItem('user_name', data.nombre)
+    router.push('/dashboard')
+  } catch (error) {
+    errorMessage.value = error.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  if (window.google) {
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse
+    });
+    window.google.accounts.id.renderButton(
+      document.getElementById("google-buttonDiv"),
+      { theme: "outline", size: "large", width: "100%" }
+    );
+  }
+})
 </script>
 
 <template>
@@ -112,6 +152,21 @@ const realizarLogin = async () => {
           <span v-if="isLoading">Cargando...</span>
           <span v-else>Entrar</span>
         </button>
+      </div>
+
+      <div class="mt-6">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">O continúa con</span>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <div id="google-buttonDiv" class="w-full flex justify-center"></div>
+        </div>
       </div>
     </form>
   </AuthLayout>
