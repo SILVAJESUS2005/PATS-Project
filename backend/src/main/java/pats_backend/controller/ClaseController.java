@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import pats_backend.model.Clase;
 import pats_backend.model.Usuario;
 import pats_backend.dto.CrearClaseDTO;
+import pats_backend.dto.UnirseClaseDTO;
 import pats_backend.repository.ClaseRepository;
 import pats_backend.repository.UsuarioRepository;
 
@@ -89,6 +90,62 @@ public class ClaseController {
         respuesta.put("docente", docenteInfo);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+    }
+
+    @PostMapping("/unirse")
+    public ResponseEntity<?> unirseAClase(@Valid @RequestBody UnirseClaseDTO unirseClaseDTO,
+                                         BindingResult result,
+                                         HttpSession session) {
+
+        // 1. Validar errores de entrada (código de acceso vacío)
+        if (result.hasErrors()) {
+            Map<String, String> errores = new HashMap<>();
+            for (FieldError error : result.getFieldErrors()) {
+                errores.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errores);
+        }
+
+        // 2. Obtener el usuario autenticado de la sesión
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión para realizar esta acción");
+        }
+
+        // Obtener el alumno fresco de la base de datos de Azure
+        Usuario alumno = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        if (alumno == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El usuario alumno no existe en el sistema");
+        }
+
+        // 3. Buscar la clase en Azure por el código de acceso
+        Clase clase = claseRepository.findByCodigoAcceso(unirseClaseDTO.getCodigoAcceso()).orElse(null);
+        if (clase == null) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Código de acceso inválido: La clase no existe");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        // 4. Verificar si el alumno ya está inscrito en la clase
+        if (clase.getAlumnos().stream().anyMatch(a -> a.getId().equals(alumno.getId()))) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Ya estás inscrito en esta clase");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        // 5. Vincular al alumno en la relación ManyToMany (tabla clase_alumnos)
+        clase.getAlumnos().add(alumno);
+        claseRepository.save(clase); // JPA y Hibernate persistirán la relación automáticamente en Azure
+
+        // 6. Respuesta limpia de éxito
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("mensaje", "Te has unido exitosamente a la clase " + clase.getNombre());
+        respuesta.put("claseId", clase.getId());
+        respuesta.put("nombreClase", clase.getNombre());
+        respuesta.put("descripcionClase", clase.getDescripcion());
+        respuesta.put("docente", clase.getDocente().getNombre());
+
+        return ResponseEntity.ok(respuesta);
     }
 
     /**
