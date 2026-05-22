@@ -15,7 +15,9 @@ import pats_backend.repository.ClaseRepository;
 import pats_backend.repository.PortafolioRepository;
 import pats_backend.repository.UsuarioRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -98,5 +100,57 @@ public class PortafolioController {
         respuesta.put("nombreClase", clase.getNombre());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+    }
+
+    @GetMapping("/clase/{claseId}")
+    public ResponseEntity<?> obtenerPortafoliosPorClase(@PathVariable Long claseId, HttpSession session) {
+        
+        // 1. Validar sesión
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión para realizar esta acción");
+        }
+
+        // Obtener el usuario fresco de Azure
+        Usuario usuario = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El usuario no existe en el sistema");
+        }
+
+        // 2. Buscar la clase en Azure
+        Clase clase = claseRepository.findById(claseId).orElse(null);
+        if (clase == null) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "La clase especificada no existe");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        // 3. Control de Seguridad:
+        // Solo el docente creador o los alumnos matriculados en la clase pueden ver las asignaciones
+        boolean esDocenteCreador = clase.getDocente().getId().equals(usuario.getId());
+        boolean esAlumnoInscrito = clase.getAlumnos().stream().anyMatch(a -> a.getId().equals(usuario.getId()));
+
+        if (!esDocenteCreador && !esAlumnoInscrito) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Acceso denegado: No perteneces a esta clase");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+        }
+
+        // 4. Obtener todos los portafolios asociados de Azure
+        List<Portafolio> portafolios = portafolioRepository.findByClaseId(claseId);
+
+        // 5. Mapear a respuesta segura libre de recursión circular JSON
+        List<Map<String, Object>> respuesta = new ArrayList<>();
+        for (Portafolio p : portafolios) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", p.getId());
+            item.put("titulo", p.getTitulo());
+            item.put("descripcion", p.getDescripcion());
+            item.put("fechaCreacion", p.getFechaCreacion());
+            item.put("fechaLimite", p.getFechaLimite());
+            respuesta.add(item);
+        }
+
+        return ResponseEntity.ok(respuesta);
     }
 }
