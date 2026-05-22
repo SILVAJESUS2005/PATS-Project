@@ -10,26 +10,32 @@ const router = createRouter({
       name: 'registro',
       component: RegistroView
     },
-    
+
     {
-        path: '/login',
-        name: 'login',
-        component: () => import('../views/LoginView.vue')
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue')
     },
     {
-        path: '/dashboard',
-        name: 'dashboard',
-        component: () => import('../views/DashboardView.vue'),
-        meta: { requiresAuth: true } // Esta etiqueta es para proteger la ruta
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/MisClasesView.vue'),
+      meta: { requiresAuth: true } // Esta etiqueta es para proteger la ruta
+    },
+    {
+      path: '/portafolios',
+      name: 'portafolios',
+      component: () => import('../views/DetallePortafoliosView.vue'),
+      meta: { requiresAuth: true }
     }
-]
+  ]
 })
 
 // === EL GUARDIA DE NAVEGACIÓN (Protección de Rutas) ===
 router.beforeEach((to, from, next) => {
   // Verificamos si la ruta a la que quiere ir el usuario requiere autenticación
   const requiereAutenticacion = to.matched.some(record => record.meta.requiresAuth)
-  
+
   // Leemos si existe nuestro token falso en el almacenamiento local
   const token = localStorage.getItem('auth_token')
 
