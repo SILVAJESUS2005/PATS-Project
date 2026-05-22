@@ -58,7 +58,15 @@ public class AuthController {
 
         // Encriptar contraseña con BCrypt
         nuevoUsuario.setPassword(passwordEncoder.encode(registroDTO.getPassword()));
-        nuevoUsuario.setRol("USER"); // Rol por defecto
+        
+        // Si no se especifica rol, asignamos "USER" (Alumno) por defecto
+        String rol = registroDTO.getRol();
+        if (rol == null || rol.trim().isEmpty()) {
+            rol = "USER";
+        } else {
+            rol = rol.trim().toUpperCase();
+        }
+        nuevoUsuario.setRol(rol);
 
         usuarioRepository.save(nuevoUsuario);
 

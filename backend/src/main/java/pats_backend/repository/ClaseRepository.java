@@ -14,4 +14,7 @@ public interface ClaseRepository extends JpaRepository<Clase, Long> {
     
     // Buscar todas las clases creadas por un docente específico
     List<Clase> findByDocenteId(Long docenteId);
+    
+    // Buscar todas las clases en las que está inscrito un alumno específico
+    List<Clase> findByAlumnosId(Long alumnoId);
 }

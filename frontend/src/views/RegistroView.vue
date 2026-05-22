@@ -12,7 +12,8 @@ const formulario = ref({
   apellidos: '',
   correo: '',
   password: '',
-  confirmarPassword: ''
+  confirmarPassword: '',
+  rol: 'USER'
 })
 
 // Estado de errores y mensajes
@@ -67,7 +68,8 @@ const procesarRegistro = async () => {
         nombre: formulario.value.nombre,
         apellidos: formulario.value.apellidos,
         correo: formulario.value.correo,
-        password: formulario.value.password
+        password: formulario.value.password,
+        rol: formulario.value.rol
       })
     })
 
@@ -82,7 +84,7 @@ const procesarRegistro = async () => {
     mensajeExito.value = data.mensaje || '¡Cuenta creada exitosamente! Redirigiendo al login...'
     
     setTimeout(() => {
-      formulario.value = { nombre: '', apellidos: '', correo: '', password: '', confirmarPassword: '' }
+      formulario.value = { nombre: '', apellidos: '', correo: '', password: '', confirmarPassword: '', rol: 'USER' }
       router.push('/login')
     }, 2000)
     // ---------------------------------------------------------
@@ -115,6 +117,32 @@ const procesarRegistro = async () => {
     </div>
 
     <form class="space-y-4" @submit.prevent="procesarRegistro">
+      
+      <!-- Selector de Rol (Pills Premium) -->
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-slate-700 mb-2">Quiero registrarme como:</label>
+        <div class="grid grid-cols-2 gap-4">
+          <button 
+            type="button"
+            @click="formulario.rol = 'USER'"
+            class="flex flex-col items-center justify-center p-4 border rounded-2xl transition-all duration-300 shadow-sm"
+            :class="formulario.rol === 'USER' ? 'border-blue-600 bg-blue-50/50 text-blue-600 ring-2 ring-blue-600/20' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
+          >
+            <span class="text-2xl mb-1">🎓</span>
+            <span class="font-extrabold text-xs sm:text-sm">Alumno</span>
+          </button>
+          
+          <button 
+            type="button"
+            @click="formulario.rol = 'DOCENTE'"
+            class="flex flex-col items-center justify-center p-4 border rounded-2xl transition-all duration-300 shadow-sm"
+            :class="formulario.rol === 'DOCENTE' ? 'border-blue-600 bg-blue-50/50 text-blue-600 ring-2 ring-blue-600/20' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
+          >
+            <span class="text-2xl mb-1">👨‍🏫</span>
+            <span class="font-extrabold text-xs sm:text-sm">Maestro / Docente</span>
+          </button>
+        </div>
+      </div>
       
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <AuthInput 
