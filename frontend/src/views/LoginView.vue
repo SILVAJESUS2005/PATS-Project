@@ -43,6 +43,7 @@ const realizarLogin = async () => {
     // Guardamos un identificador local (en el futuro esto podría ser el JWT)
     localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
     localStorage.setItem('user_name', data.nombre)
+    localStorage.setItem('user_role', data.rol)
     
     router.push('/dashboard')
     // ---------------------------------------------------------
@@ -70,6 +71,7 @@ const handleGoogleResponse = async (response) => {
     const data = await res.json()
     localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
     localStorage.setItem('user_name', data.nombre)
+    localStorage.setItem('user_role', data.rol)
     router.push('/dashboard')
   } catch (error) {
     errorMessage.value = error.message

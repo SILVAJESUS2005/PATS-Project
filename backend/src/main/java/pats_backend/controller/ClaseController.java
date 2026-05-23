@@ -14,7 +14,9 @@ import pats_backend.dto.UnirseClaseDTO;
 import pats_backend.repository.ClaseRepository;
 import pats_backend.repository.UsuarioRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -29,6 +31,50 @@ public class ClaseController {
     public ClaseController(ClaseRepository claseRepository, UsuarioRepository usuarioRepository) {
         this.claseRepository = claseRepository;
         this.usuarioRepository = usuarioRepository;
+    }
+
+    @GetMapping
+    public ResponseEntity<?> obtenerClasesPorUsuario(HttpSession session) {
+        
+        // 1. Validar sesión
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión para realizar esta acción");
+        }
+
+        // Obtener el usuario fresco de la base de datos de Azure
+        Usuario usuario = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El usuario no existe en el sistema");
+        }
+
+        List<Clase> clases;
+
+        // 2. Si el rol es DOCENTE, buscar las clases creadas por él
+        if ("DOCENTE".equalsIgnoreCase(usuario.getRol())) {
+            clases = claseRepository.findByDocenteId(usuario.getId());
+        } else {
+            // Si es ALUMNO (o cualquier otro rol como "USER"), buscar las clases en las que está inscrito
+            clases = claseRepository.findByAlumnosId(usuario.getId());
+        }
+
+        // 3. Mapear a respuesta segura libre de recursión circular JSON
+        List<Map<String, Object>> respuesta = new ArrayList<>();
+        for (Clase c : clases) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", c.getId());
+            item.put("nombre", c.getNombre());
+            item.put("descripcion", c.getDescripcion());
+            item.put("codigoAcceso", c.getCodigoAcceso());
+            
+            Map<String, Object> docenteInfo = new HashMap<>();
+            docenteInfo.put("nombre", c.getDocente().getNombre());
+            item.put("docente", docenteInfo);
+            
+            respuesta.add(item);
+        }
+
+        return ResponseEntity.ok(respuesta);
     }
 
     @PostMapping
