@@ -14,6 +14,9 @@ public class Usuario {
     private String correo;
     private String password;
     private String rol;
+    
+    @Column(name = "matricula")
+    private String matricula;
 
     public Long getId() {
         return id;
@@ -49,5 +52,13 @@ public class Usuario {
 
     public void setRol(String rol) {
         this.rol = rol;
+    }
+
+    public String getMatricula() {
+        return matricula;
+    }
+
+    public void setMatricula(String matricula) {
+        this.matricula = matricula;
     }
 }
