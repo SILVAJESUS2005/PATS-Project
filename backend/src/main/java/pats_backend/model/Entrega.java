@@ -1,6 +1,8 @@
 package pats_backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,7 +19,9 @@ public class Entrega {
     @Column(name = "fecha_entrega")
     private LocalDateTime fechaEntrega;
 
-    @Column(min = 0, max = 100)
+    @Min(0)
+    @Max(100)
+    @Column(name = "calificacion")
     private Integer calificacion; // Calificación sobre 100
 
     @Column(columnDefinition = "TEXT")
