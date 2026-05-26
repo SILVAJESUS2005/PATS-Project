@@ -10,6 +10,8 @@ const activeTab = ref('proximamente')
 const searchQuery = ref('')
 const showEvaluateModal = ref(false)
 const selectedPortafolio = ref('')
+const selectedEntregaId = ref(null)
+const selectedArchivoUrl = ref('')
 
 // Simulación de datos (Mock Data) estructurada por fechas
 const tareas = ref([
@@ -66,14 +68,18 @@ const goBack = () => {
   router.push('/dashboard')
 }
 
-const openEvaluateModal = (tareaTitle) => {
-  selectedPortafolio.value = tareaTitle
+const openEvaluateModal = (tarea) => {
+  selectedPortafolio.value = tarea.title
+  selectedEntregaId.value = tarea.id // Guardamos el ID de la entrega
+  
+  // URL de descarga del backend o una de prueba por defecto
+  selectedArchivoUrl.value = tarea.archivoUrl || '/api/entregas/descargar/ejemplo.pdf'
+  
   showEvaluateModal.value = true
 }
 
 const handleEvaluated = (data) => {
-  console.log('Evaluación guardada:', data)
-  // Aquí se enviaría el fetch PUT a la API real
+  console.log('Evaluación guardada en Azure:', data)
 }
 </script>
 
@@ -177,7 +183,7 @@ const handleEvaluated = (data) => {
                 v-for="tarea in grupo.items.filter(i => i.estado === activeTab)" 
                 :key="tarea.id"
                 class="group flex items-center justify-between p-4 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-                @click="openEvaluateModal(tarea.title)"
+                @click="openEvaluateModal(tarea)"
               >
                 <!-- Lado Izquierdo: Icono + Textos -->
                 <div class="flex items-center gap-4">
@@ -214,10 +220,11 @@ const handleEvaluated = (data) => {
         </template>
       </div>
 
-      <!-- Modal de Evaluación (Se abre al hacer clic en una fila) -->
       <EvaluateModal 
         :show="showEvaluateModal"
         :portafolioName="selectedPortafolio"
+        :entregaId="selectedEntregaId"
+        :archivoUrl="selectedArchivoUrl"
         @close="showEvaluateModal = false"
         @evaluated="handleEvaluated"
       />
