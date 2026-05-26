@@ -4,6 +4,7 @@ import BasePremiumModal from './BasePremiumModal.vue'
 
 const props = defineProps({
   show: Boolean,
+  entregaId: [Number, String],
   portafolioName: {
     type: String,
     default: 'Portafolio'
@@ -34,13 +35,18 @@ const submitEvaluacion = async () => {
   errorMessage.value = ''
   
   try {
-    // Simulación del endpoint PUT /api/entregas/{id}/calificar
+    // -----------------------------------------------------------------------------------------
+    // INTEGRANTE 4: Tarea 4 - Conectar el botón "Entregar" con el endpoint CalificarEntregaDTO
+    // Aquí debes hacer el fetch PUT a /api/entregas/${props.entregaId}/calificar
+    // -----------------------------------------------------------------------------------------
+    
+    // Simulación temporal para que no marque error mientras el Integrante 4 lo programa
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    emit('evaluated', { calificacion: calificacion.value, feedback: feedback.value })
+    emit('evaluated')
     closeModal()
   } catch (error) {
-    errorMessage.value = "Ocurrió un error al guardar la calificación."
+    errorMessage.value = error.message || "Ocurrió un error al guardar la calificación."
   } finally {
     isLoading.value = false
   }
@@ -57,7 +63,15 @@ const submitEvaluacion = async () => {
     </template>
 
     <template #content>
+      <!-- ========================================================================= -->
+      <!-- INTEGRANTE 4: Tarea 2 - Mostrar aquí el visualizador del archivo entregado -->
+      <!-- ========================================================================= -->
+      
       <form @submit.prevent="submitEvaluacion" class="space-y-6 mt-4">
+        
+        <!-- ========================================================================= -->
+        <!-- INTEGRANTE 4: Tarea 3 - Formulario de calificación (Comentarios y Nota) -->
+        <!-- ========================================================================= -->
         
         <!-- Campo de Calificación -->
         <div>

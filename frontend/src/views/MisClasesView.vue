@@ -142,6 +142,7 @@ const handleClassJoinedOrCreated = (data) => {
         <div 
           v-for="(clase, index) in clases" 
           :key="clase.id"
+          @click="router.push(`/clase/${clase.id}`)"
           class="group relative bg-white/70 backdrop-blur-lg border border-white/60 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-2 transition-all duration-500 cursor-pointer overflow-hidden"
           :style="{ transitionDelay: `${index * 100 + 200}ms` }"
           :class="isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'"
