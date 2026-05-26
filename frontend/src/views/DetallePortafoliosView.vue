@@ -23,7 +23,7 @@ const tareas = ref([])
 const errorMessage = ref('')
 const isLoadingPortafolios = ref(false)
 
-onMounted(async () => {
+const fetchPortafolios = async () => {
   if (!claseId) {
     errorMessage.value = "No se ha seleccionado ninguna clase."
     setTimeout(() => isLoaded.value = true, 100)
@@ -48,6 +48,10 @@ onMounted(async () => {
     isLoadingPortafolios.value = false
     setTimeout(() => isLoaded.value = true, 100)
   }
+}
+
+onMounted(() => {
+  fetchPortafolios()
 })
 
 const formatPortafolios = (portafoliosReales) => {
@@ -58,12 +62,30 @@ const formatPortafolios = (portafoliosReales) => {
     const fechaLim = new Date(p.fechaLimite)
     const vencido = fechaLim < ahora
     
+    let estado = 'proximamente'
+    let iconColor = 'text-blue-500'
+    let bgColor = 'bg-blue-50'
+    let subtitulo = 'Por entregar'
+
+    if (p.entregado) {
+      estado = 'completado'
+      iconColor = 'text-green-500'
+      bgColor = 'bg-green-50'
+      subtitulo = 'Completado'
+    } else if (vencido) {
+      estado = 'vencido'
+      iconColor = 'text-red-500'
+      bgColor = 'bg-red-50'
+      subtitulo = 'Vencido'
+    }
+
     const dateStr = p.fechaLimite ? fechaLim.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha'
     
+    // Si hay varias tareas en el mismo día con distinto estado, el subtitulo principal puede variar, pero las tareas individuales se pintan bien
     if (!grupos[dateStr]) {
       grupos[dateStr] = {
         fechaGrupo: dateStr,
-        subtitulo: vencido ? 'Vencido' : 'Por entregar',
+        subtitulo: subtitulo,
         vencido: vencido,
         items: []
       }
@@ -73,9 +95,9 @@ const formatPortafolios = (portafoliosReales) => {
       id: p.id,
       title: p.titulo,
       classCode: claseNombre.value,
-      estado: vencido ? 'vencido' : 'proximamente',
-      iconColor: vencido ? 'text-red-500' : 'text-blue-500',
-      bgColor: vencido ? 'bg-red-50' : 'bg-blue-50'
+      estado: estado,
+      iconColor: iconColor,
+      bgColor: bgColor
     })
   })
   
@@ -92,7 +114,12 @@ const openModal = (tarea) => {
   selectedPortafolioId.value = tarea.id
   
   if (userRole === 'USER') {
-    showUploadModal.value = true
+    if (tarea.estado === 'completado') {
+      // Optional: Podríamos evitar que abra si ya entregó, pero por ahora lo dejamos
+      showUploadModal.value = true
+    } else {
+      showUploadModal.value = true
+    }
   } else {
     showEvaluateModal.value = true
   }
@@ -104,7 +131,8 @@ const handleEvaluated = (data) => {
 
 const handleUploaded = () => {
   console.log('Evidencia subida correctamente al portafolio', selectedPortafolioId.value)
-  // Próximamente se moverá a completado en Tarea 3
+  // Refrescar la lista silenciosamente para que la tarjeta se mueva a "Completado"
+  fetchPortafolios()
 }
 </script>
 
