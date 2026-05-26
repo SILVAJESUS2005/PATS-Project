@@ -25,6 +25,11 @@ onMounted(() => {
   setTimeout(() => {
     isLoaded.value = true
   }, 100)
+
+  // Escuchar actualizaciones de perfil de usuario
+  window.addEventListener('profile-updated', () => {
+    userName.value = localStorage.getItem('user_name') || 'Alumno'
+  })
 })
 
 const navigateToPortafolios = () => {
