@@ -2,25 +2,56 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import JoinClassModal from '../components/JoinClassModal.vue'
+import CreateClassModal from '../components/CreateClassModal.vue'
 
 const router = useRouter()
 
-const userName = ref(localStorage.getItem('user_name') || 'Alumno')
+const userName = ref(localStorage.getItem('user_name') || 'Usuario')
+const rol = ref(localStorage.getItem('user_role') || 'ALUMNO')
 
-// Iconos SVG de ejemplo para darle vida a cada tarjeta
-const mockClasses = ref([
-  { id: 1, name: 'Gráficos por computadora', code: 'PATS-XYZ1', color: 'from-pink-500 to-rose-500', icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
-  { id: 2, name: 'Arquitectura de computadoras', code: 'PATS-XYZ2', color: 'from-blue-500 to-cyan-500', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z' },
-  { id: 3, name: 'Análisis de señales', code: 'PATS-XYZ3', color: 'from-violet-500 to-purple-500', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-  { id: 4, name: 'Redes de computadoras', code: 'PATS-XYZ4', color: 'from-emerald-500 to-teal-500', icon: 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9' },
-  { id: 5, name: 'Ingeniería de software', code: 'PATS-XYZ5', color: 'from-amber-500 to-orange-500', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
-  { id: 6, name: 'Bases de datos distribuidas', code: 'PATS-XYZ6', color: 'from-indigo-500 to-blue-500', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' }
-])
+// Paleta de colores para las tarjetas
+const colorPalette = [
+  'from-pink-500 to-rose-500',
+  'from-blue-500 to-cyan-500',
+  'from-violet-500 to-purple-500',
+  'from-emerald-500 to-teal-500',
+  'from-amber-500 to-orange-500',
+  'from-indigo-500 to-blue-500'
+]
+const defaultIcon = 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
+
+const clases = ref([])
 
 const isLoaded = ref(false)
 const showAddClassModal = ref(false)
+const showCreateClassModal = ref(false)
+
+const fetchClases = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/clases', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    })
+    if (response.ok) {
+      const data = await response.json()
+      clases.value = data.map((c, index) => ({
+        id: c.id,
+        name: c.nombre,
+        code: c.codigoAcceso,
+        color: colorPalette[index % colorPalette.length],
+        icon: defaultIcon
+      }))
+    } else {
+      console.error("Error obteniendo las clases")
+    }
+  } catch (error) {
+    console.error("Error de conexión al backend:", error)
+  }
+}
 
 onMounted(() => {
+  fetchClases()
   // Pequeño retraso para la animación de entrada
   setTimeout(() => {
     isLoaded.value = true
@@ -34,27 +65,27 @@ onMounted(() => {
 
 const navigateToPortafolios = (clase) => {
   if (clase && clase.id) {
-    router.push(`/portafolios?claseId=${clase.id}&claseNombre=${encodeURIComponent(clase.name)}`)
+    if (rol.value === 'DOCENTE') {
+      router.push(`/clase/${clase.id}`)
+    } else {
+      router.push(`/portafolios?claseId=${clase.id}&claseNombre=${encodeURIComponent(clase.name)}`)
+    }
   } else {
     router.push('/portafolios')
   }
 }
 
 const openAddClassModal = () => {
-  showAddClassModal.value = true
+  if (rol.value === 'DOCENTE') {
+    showCreateClassModal.value = true
+  } else {
+    showAddClassModal.value = true
+  }
 }
 
-const handleClassJoined = (data) => {
-  console.log("¡Te has unido exitosamente!", data)
-  // Aquí podríamos actualizar la lista mockClasses temporalmente
-  // con la nueva clase para que el usuario la vea reflejada inmediatamente
-  mockClasses.value.push({
-    id: data.claseId,
-    name: data.nombreClase,
-    code: data.codigoAcceso || 'PATS-NEW',
-    color: 'from-blue-600 to-indigo-600', // Color por defecto para nuevas
-    icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
-  })
+const handleClassJoinedOrCreated = (data) => {
+  console.log("¡Operación exitosa!", data)
+  fetchClases()
 }
 </script>
 
@@ -122,7 +153,7 @@ const handleClassJoined = (data) => {
       <!-- Grid de Clases (Tarjetas Modernas) -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div 
-          v-for="(clase, index) in mockClasses" 
+          v-for="(clase, index) in clases" 
           :key="clase.id"
           @click="navigateToPortafolios(clase)"
           class="group relative bg-white/70 backdrop-blur-lg border border-white/60 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-2 transition-all duration-500 cursor-pointer overflow-hidden"
@@ -190,18 +221,28 @@ const handleClassJoined = (data) => {
               </svg>
             </div>
             <div class="flex flex-col text-left">
-              <span class="text-slate-800 font-bold text-lg">Agregar nueva clase</span>
-              <span class="text-slate-500 text-sm font-medium">Ingresa el código proporcionado por tu profesor</span>
+              <span class="text-slate-800 font-bold text-lg">
+                {{ rol === 'DOCENTE' ? 'Crear nueva clase' : 'Agregar nueva clase' }}
+              </span>
+              <span class="text-slate-500 text-sm font-medium">
+                {{ rol === 'DOCENTE' ? 'Genera un código para tus alumnos' : 'Ingresa el código proporcionado por tu profesor' }}
+              </span>
             </div>
           </div>
         </button>
       </div>
 
-      <!-- Integración del Modal -->
+      <!-- Integración de los Modales -->
       <JoinClassModal 
         :show="showAddClassModal"
         @close="showAddClassModal = false"
-        @joined="handleClassJoined"
+        @joined="handleClassJoinedOrCreated"
+      />
+
+      <CreateClassModal 
+        :show="showCreateClassModal"
+        @close="showCreateClassModal = false"
+        @created="handleClassJoinedOrCreated"
       />
 
     </div>

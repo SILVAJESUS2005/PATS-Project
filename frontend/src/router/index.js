@@ -23,6 +23,18 @@ const router = createRouter({
       meta: { requiresAuth: true } // Esta etiqueta es para proteger la ruta
     },
     {
+      path: '/clase/:id',
+      name: 'clase-detalle',
+      component: () => import('../views/ClaseDetalleView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/portafolio/:id/entregas',
+      name: 'entregas-portafolio',
+      component: () => import('../views/EntregasPortafolioView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/portafolios',
       name: 'portafolios',
       component: () => import('../views/DetallePortafoliosView.vue'),
