@@ -128,7 +128,7 @@ public class AuthController {
                     usuario.setNombre(name);
                     usuario.setCorreo(email);
                     usuario.setPassword(""); // Sin contraseña (inicia sesión con Google)
-                    usuario.setRol("USER");
+                    usuario.setRol("PENDIENTE");
                     usuario = usuarioRepository.save(usuario);
                 }
 

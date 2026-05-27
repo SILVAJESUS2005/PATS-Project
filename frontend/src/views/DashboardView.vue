@@ -1,19 +1,39 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import ProfileModal from '../components/ProfileModal.vue'
 
 const router = useRouter()
 const userName = ref('')
+const userRole = ref('')
+const showProfileModal = ref(false)
 
 // Al cargar la página, leemos la "sesión" (localStorage)
 onMounted(() => {
   const storedName = localStorage.getItem('user_name')
+  const storedRole = localStorage.getItem('user_role')
+  
   if (storedName) {
     userName.value = storedName
   } else {
     userName.value = 'Usuario'
   }
+
+  if (storedRole) {
+    userRole.value = storedRole
+  }
+
+  // Validación ineludible de perfil para alumnos
+  const matricula = localStorage.getItem('user_matricula')
+  if (storedRole === 'ALUMNO' && !matricula) {
+    showProfileModal.value = true
+  }
 })
+
+const onProfileSaved = (data) => {
+  localStorage.setItem('user_matricula', data.matricula)
+  showProfileModal.value = false
+}
 
 // La función de cerrar sesión ahora vive en el MainNavbar global,
 // pero mantenemos userName por si el Dashboard quiere mostrar un mensaje de bienvenida gigante en el centro.
@@ -38,5 +58,8 @@ onMounted(() => {
         </div>
       </div>
     </main>
+
+    <!-- Modal Ineludible de Perfil -->
+    <ProfileModal :is-open="showProfileModal" @profile-updated="onProfileSaved" />
   </div>
 </template>
