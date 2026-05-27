@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 
 import pats_backend.model.Usuario;
 import pats_backend.dto.ActualizarPerfilDTO;
+import pats_backend.dto.ActualizarRolDTO;
 import pats_backend.repository.UsuarioRepository;
 
 import java.util.HashMap;
@@ -60,6 +61,40 @@ public class UsuarioController {
         respuesta.put("mensaje", "Perfil actualizado correctamente");
         respuesta.put("nombre", usuarioDb.getNombre());
         respuesta.put("matricula", usuarioDb.getMatricula());
+
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @PutMapping("/rol")
+    public ResponseEntity<?> actualizarRol(@Valid @RequestBody ActualizarRolDTO dto, 
+                                           BindingResult result, 
+                                           HttpSession session) {
+        if (result.hasErrors()) {
+            Map<String, String> errores = new HashMap<>();
+            for (FieldError error : result.getFieldErrors()) {
+                errores.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errores);
+        }
+
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión.");
+        }
+
+        Usuario usuarioDb = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        if (usuarioDb == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado.");
+        }
+
+        usuarioDb.setRol(dto.getRol());
+        usuarioRepository.save(usuarioDb);
+        
+        session.setAttribute("usuario", usuarioDb);
+
+        Map<String, String> respuesta = new HashMap<>();
+        respuesta.put("mensaje", "Rol actualizado correctamente");
+        respuesta.put("rol", usuarioDb.getRol());
 
         return ResponseEntity.ok(respuesta);
     }
