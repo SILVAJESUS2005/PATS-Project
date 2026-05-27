@@ -12,10 +12,12 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
+import pats_backend.model.Portafolio;
+import pats_backend.model.EvidenciaArchivo;
+import pats_backend.model.CategoriaEvidencia;
 import pats_backend.model.Clase;
 import pats_backend.model.Entrega;
 import pats_backend.model.Usuario;
-import pats_backend.model.Portafolio;
 import pats_backend.dto.CalificarEntregaDTO;
 import pats_backend.repository.EntregaRepository;
 import pats_backend.repository.UsuarioRepository;
@@ -25,6 +27,8 @@ import pats_backend.service.FileStorageService;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/entregas")
@@ -47,13 +51,16 @@ public class EntregaController {
     }
 
     // =========================================================================
-    // TAREA 1: Subir Archivo (MultipartFile) y crear la Entrega (Alumno)
-    // =========================================================================
     @PostMapping("/subir")
-    public ResponseEntity<?> subirEvidencia(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<?> subirEvidencia(
             @RequestParam("portafolioId") Long portafolioId,
+            @RequestParam(value = "introduccion", required = false) String introduccion,
+            @RequestParam(value = "conclusiones", required = false) String conclusiones,
+            @RequestParam(value = "actividadesClase", required = false) MultipartFile[] actividadesClase,
+            @RequestParam(value = "tareasCasa", required = false) MultipartFile[] tareasCasa,
+            @RequestParam(value = "examenProyecto", required = false) MultipartFile[] examenProyecto,
             HttpSession session) {
-        // Validar sesión
+        
         Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
         if (usuarioSession == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión");
@@ -67,28 +74,38 @@ public class EntregaController {
         }
 
         try {
-            // Guardar el archivo localmente en el servidor
-            String fileName = fileStorageService.storeFile(file);
-
-            // Generar URL para acceder al archivo (Endpoint de descarga)
-            String fileUrl = "/api/entregas/descargar/" + fileName;
-
-            // Guardar el registro en la base de datos (entregas)
             Entrega entrega = new Entrega();
-            entrega.setArchivoUrl(fileUrl); // Se guarda la URL de la evidencia
+            entrega.setIntroduccion(introduccion);
+            entrega.setConclusion(conclusiones);
             entrega.setAlumno(alumno);
             entrega.setPortafolio(portafolio);
+
+            guardarArchivosCategoria(entrega, actividadesClase, CategoriaEvidencia.ACTIVIDADES_CLASE);
+            guardarArchivosCategoria(entrega, tareasCasa, CategoriaEvidencia.TAREAS_CASA);
+            guardarArchivosCategoria(entrega, examenProyecto, CategoriaEvidencia.EXAMEN_PROYECTO);
 
             entregaRepository.save(entrega);
 
             Map<String, String> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Evidencia subida correctamente");
-            respuesta.put("archivoUrl", fileUrl);
-
+            respuesta.put("mensaje", "Evidencia multi-categoría subida correctamente");
             return ResponseEntity.ok(respuesta);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Fallo al subir archivo: " + ex.getMessage());
+        }
+    }
+
+    private void guardarArchivosCategoria(Entrega entrega, MultipartFile[] archivos, CategoriaEvidencia categoria) {
+        if (archivos != null && archivos.length > 0) {
+            for (MultipartFile file : archivos) {
+                if (!file.isEmpty()) {
+                    String fileName = fileStorageService.storeFile(file);
+                    EvidenciaArchivo evidenciaArchivo = new EvidenciaArchivo();
+                    evidenciaArchivo.setArchivoUrl(fileName); // Solo guardamos el nombre o ruta relativa
+                    evidenciaArchivo.setCategoriaEvidencia(categoria);
+                    entrega.addArchivo(evidenciaArchivo);
+                }
+            }
         }
     }
 
@@ -213,7 +230,6 @@ public class EntregaController {
             if (entregaAlumno != null) {
                 item.put("entregado", true);
                 item.put("entregaId", entregaAlumno.getId());
-                item.put("archivoUrl", entregaAlumno.getArchivoUrl());
                 item.put("calificacion", entregaAlumno.getCalificacion());
                 item.put("fechaEntrega", entregaAlumno.getFechaEntrega());
                 item.put("comentarios", entregaAlumno.getComentarios());
@@ -222,6 +238,45 @@ public class EntregaController {
             }
             respuesta.add(item);
         }
+
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> obtenerEntrega(@PathVariable Long id, HttpSession session) {
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión");
+        }
+
+        Entrega entrega = entregaRepository.findById(id).orElse(null);
+        if (entrega == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Entrega no existe");
+        }
+
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("id", entrega.getId());
+        respuesta.put("introduccion", entrega.getIntroduccion());
+        respuesta.put("conclusion", entrega.getConclusion());
+        respuesta.put("fechaEntrega", entrega.getFechaEntrega());
+        respuesta.put("calificacion", entrega.getCalificacion());
+        respuesta.put("comentarios", entrega.getComentarios());
+
+        Map<String, Object> alumnoInfo = new HashMap<>();
+        alumnoInfo.put("nombre", entrega.getAlumno().getNombre());
+        alumnoInfo.put("matricula", entrega.getAlumno().getMatricula());
+        respuesta.put("alumno", alumnoInfo);
+
+        List<Map<String, Object>> archivosInfo = new ArrayList<>();
+        if (entrega.getArchivos() != null) {
+            for (EvidenciaArchivo ea : entrega.getArchivos()) {
+                Map<String, Object> ai = new HashMap<>();
+                ai.put("url", ea.getArchivoUrl());
+                ai.put("categoria", ea.getCategoriaEvidencia().name());
+                archivosInfo.add(ai);
+            }
+        }
+        respuesta.put("archivos", archivosInfo);
 
         return ResponseEntity.ok(respuesta);
     }

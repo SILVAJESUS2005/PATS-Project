@@ -7,9 +7,11 @@ const router = useRouter()
 const userName = ref('')
 const userRole = ref('')
 const showProfileModal = ref(false)
+const isMandatory = ref(false)
+const usuario = ref({})
 
 // Al cargar la página, leemos la "sesión" (localStorage)
-onMounted(() => {
+onMounted(async () => {
   const storedName = localStorage.getItem('user_name')
   const storedRole = localStorage.getItem('user_role')
   
@@ -18,25 +20,34 @@ onMounted(() => {
   } else {
     userName.value = 'Usuario'
   }
-
   if (storedRole) {
     userRole.value = storedRole
   }
 
-  // Validación ineludible de perfil para alumnos
-  const matricula = localStorage.getItem('user_matricula')
-  if (storedRole === 'ALUMNO' && !matricula) {
-    showProfileModal.value = true
+  try {
+    const response = await fetch('http://localhost:8080/api/auth/me', {
+      credentials: 'include'
+    })
+    
+    if (response.ok) {
+      usuario.value = await response.json()
+      
+      // Validación ineludible
+      if (usuario.value.rol === 'ALUMNO' && (!usuario.value.matricula || !usuario.value.nombre)) {
+        showProfileModal.value = true
+        isMandatory.value = true
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error)
   }
 })
 
 const onProfileSaved = (data) => {
   localStorage.setItem('user_matricula', data.matricula)
+  localStorage.setItem('user_name', data.nombre)
   showProfileModal.value = false
 }
-
-// La función de cerrar sesión ahora vive en el MainNavbar global,
-// pero mantenemos userName por si el Dashboard quiere mostrar un mensaje de bienvenida gigante en el centro.
 </script>
 
 <template>
@@ -60,6 +71,11 @@ const onProfileSaved = (data) => {
     </main>
 
     <!-- Modal Ineludible de Perfil -->
-    <ProfileModal :is-open="showProfileModal" @profile-updated="onProfileSaved" />
+    <ProfileModal 
+      :is-open="showProfileModal" 
+      :mandatory="isMandatory"
+      @profile-updated="onProfileSaved" 
+      @close="showProfileModal = false"
+    />
   </div>
 </template>
