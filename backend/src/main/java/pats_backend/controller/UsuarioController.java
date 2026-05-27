@@ -49,8 +49,17 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado.");
         }
 
+        // Custom validation: Si es ALUMNO, la matrícula no puede estar vacía
+        if ("ALUMNO".equals(usuarioDb.getRol()) && (dto.getMatricula() == null || dto.getMatricula().trim().isEmpty())) {
+            Map<String, String> errores = new HashMap<>();
+            errores.put("matricula", "La matrícula no puede estar vacía para un alumno.");
+            return ResponseEntity.badRequest().body(errores);
+        }
+
         usuarioDb.setNombre(dto.getNombre());
-        usuarioDb.setMatricula(dto.getMatricula());
+        if ("ALUMNO".equals(usuarioDb.getRol())) {
+            usuarioDb.setMatricula(dto.getMatricula());
+        }
 
         usuarioRepository.save(usuarioDb);
         

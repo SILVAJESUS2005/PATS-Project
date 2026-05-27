@@ -28,18 +28,23 @@ const errorMessage = ref('')
 const isLoadingPortafolios = ref(false)
 
 const fetchPortafolios = async () => {
-  if (!claseId) {
-    errorMessage.value = "No se ha seleccionado ninguna clase."
-    setTimeout(() => isLoaded.value = true, 100)
-    return
-  }
-
   isLoadingPortafolios.value = true
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 8000)
 
   try {
-    const response = await fetch(`http://localhost:8080/api/portafolios/clase/${claseId}`, {
+    let url = `http://localhost:8080/api/portafolios/clase/${claseId}`
+    if (!claseId) {
+      if (rol.value !== 'ALUMNO') {
+        errorMessage.value = "No se ha seleccionado ninguna clase."
+        setTimeout(() => isLoaded.value = true, 100)
+        return
+      }
+      url = `http://localhost:8080/api/portafolios/mis-portafolios`
+      claseNombre.value = 'Todos mis portafolios'
+    }
+
+    const response = await fetch(url, {
       credentials: 'include',
       signal: controller.signal
     })
@@ -47,7 +52,7 @@ const fetchPortafolios = async () => {
     clearTimeout(timeoutId)
 
     if (!response.ok) {
-      throw new Error('Error al obtener los portafolios de la clase.')
+      throw new Error('Error al obtener los portafolios.')
     }
     
     const data = await response.json()
@@ -62,6 +67,10 @@ const fetchPortafolios = async () => {
     isLoadingPortafolios.value = false
     setTimeout(() => isLoaded.value = true, 100)
   }
+}
+
+const descargarPdf = (entregaId) => {
+  window.open(`http://localhost:8080/api/entregas/${entregaId}/pdf`, '_blank')
 }
 
 onMounted(() => {
@@ -108,7 +117,7 @@ const formatPortafolios = (portafoliosReales) => {
     grupos[dateStr].items.push({
       id: p.id,
       title: p.titulo,
-      classCode: claseNombre.value,
+      classCode: p.claseNombre || claseNombre.value,
       estado: estado,
       iconColor: iconColor,
       bgColor: bgColor,
@@ -332,6 +341,13 @@ const handlePortafolioCreated = (data) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
+                    
+                    <button v-if="tarea.estado === 'entregado' && tarea.entregaId" @click.stop="descargarPdf(tarea.entregaId)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Descargar PDF">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </button>
+
                     <button class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />

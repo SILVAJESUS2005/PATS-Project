@@ -95,6 +95,7 @@ public class AuthController {
                 respuesta.put("nombre", usuarioEncontrado.getNombre());
                 respuesta.put("correo", usuarioEncontrado.getCorreo());
                 respuesta.put("rol", usuarioEncontrado.getRol());
+                respuesta.put("matricula", usuarioEncontrado.getMatricula() != null ? usuarioEncontrado.getMatricula() : "");
 
                 return ResponseEntity.ok(respuesta);
             }

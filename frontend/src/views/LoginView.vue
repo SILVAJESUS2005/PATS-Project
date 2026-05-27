@@ -46,6 +46,7 @@ const realizarLogin = async () => {
     localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
     localStorage.setItem('user_name', data.nombre)
     localStorage.setItem('user_role', data.rol)
+    if (data.matricula) localStorage.setItem('user_matricula', data.matricula)
     
     router.push('/dashboard')
     // ---------------------------------------------------------
@@ -74,6 +75,7 @@ const handleGoogleResponse = async (response) => {
     localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
     localStorage.setItem('user_name', data.nombre)
     localStorage.setItem('user_role', data.rol)
+    if (data.matricula) localStorage.setItem('user_matricula', data.matricula)
     
     if (data.rol === 'PENDIENTE') {
       showRoleModal.value = true

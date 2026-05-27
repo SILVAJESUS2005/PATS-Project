@@ -186,4 +186,54 @@ public class PortafolioController {
 
         return ResponseEntity.ok(respuesta);
     }
+
+    @GetMapping("/mis-portafolios")
+    public ResponseEntity<?> obtenerTodosMisPortafolios(HttpSession session) {
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión");
+        }
+
+        Usuario usuario = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado");
+        }
+
+        List<Map<String, Object>> respuesta = new ArrayList<>();
+
+        if ("ALUMNO".equals(usuario.getRol())) {
+            List<Clase> misClases = claseRepository.findByAlumnosId(usuario.getId());
+            for (Clase clase : misClases) {
+                List<Portafolio> portafolios = portafolioRepository.findByClaseId(clase.getId());
+                List<pats_backend.model.Entrega> entregasDelAlumno = entregaRepository.findByAlumnoAndPortafolioClaseId(usuario, clase.getId());
+                
+                for (Portafolio p : portafolios) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", p.getId());
+                    item.put("titulo", p.getTitulo());
+                    item.put("descripcion", p.getDescripcion());
+                    item.put("fechaCreacion", p.getFechaCreacion());
+                    item.put("fechaLimite", p.getFechaLimite());
+                    item.put("claseNombre", clase.getNombre());
+                    item.put("claseId", clase.getId());
+
+                    pats_backend.model.Entrega entrega = entregasDelAlumno.stream()
+                            .filter(e -> e.getPortafolio().getId().equals(p.getId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (entrega != null) {
+                        item.put("entregado", true);
+                        item.put("entregaId", entrega.getId());
+                        item.put("calificacion", entrega.getCalificacion());
+                        item.put("comentarios", entrega.getComentarios());
+                    } else {
+                        item.put("entregado", false);
+                    }
+                    respuesta.add(item);
+                }
+            }
+        }
+        return ResponseEntity.ok(respuesta);
+    }
 }

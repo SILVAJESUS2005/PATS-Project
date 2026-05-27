@@ -62,8 +62,8 @@ const abrirModalPerfil = () => {
 }
 
 const guardarPerfil = async () => {
-  if (!perfilNombre.value.trim() || !perfilMatricula.value.trim()) {
-    profileErrorMessage.value = 'El nombre y la matrícula son requeridos.'
+  if (!perfilNombre.value.trim() || (userRole.value === 'ALUMNO' && !perfilMatricula.value.trim())) {
+    profileErrorMessage.value = 'Todos los campos son requeridos.'
     return
   }
 
@@ -166,7 +166,6 @@ const guardarPerfil = async () => {
             </span>
             
             <button 
-              v-if="userRole === 'ALUMNO'"
               @click="abrirModalPerfil"
               class="inline-flex items-center px-3.5 py-1.5 border border-slate-200 text-sm font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer shadow-sm"
             >
@@ -209,6 +208,7 @@ const guardarPerfil = async () => {
 
           <!-- Campo Matrícula -->
           <AuthInput
+            v-if="userRole === 'ALUMNO'"
             id="perfil-matricula"
             label="Matrícula"
             type="text"
