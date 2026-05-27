@@ -74,11 +74,21 @@ public class EntregaController {
         }
 
         try {
-            Entrega entrega = new Entrega();
+            Entrega entrega = entregaRepository.findByPortafolioAndAlumno(portafolio, alumno).orElse(new Entrega());
+            
+            if (entrega.getCalificacion() != null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("El portafolio ya ha sido calificado y no se puede editar.");
+            }
+            
             entrega.setIntroduccion(introduccion);
             entrega.setConclusion(conclusiones);
             entrega.setAlumno(alumno);
             entrega.setPortafolio(portafolio);
+
+            // Limpiar archivos anteriores si se está editando
+            if (entrega.getArchivos() != null) {
+                entrega.getArchivos().clear();
+            }
 
             guardarArchivosCategoria(entrega, actividadesClase, CategoriaEvidencia.ACTIVIDADES_CLASE);
             guardarArchivosCategoria(entrega, tareasCasa, CategoriaEvidencia.TAREAS_CASA);

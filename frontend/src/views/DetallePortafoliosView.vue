@@ -129,6 +129,10 @@ const openModal = (tarea) => {
   selectedPortafolio.value = tarea.title
 
   if (userRole === 'ALUMNO') {
+    if (tarea.calificacion !== null && tarea.calificacion !== undefined) {
+      alert('Esta entrega ya ha sido calificada por el docente y no puede ser modificada.')
+      return
+    }
     selectedPortafolioId.value = tarea.id
     showUploadModal.value = true
     return
@@ -280,7 +284,7 @@ const handlePortafolioCreated = (data) => {
         <!-- Renderizar grupos dinámicamente filtrando por el tab activo -->
         <template v-for="(grupo, gIndex) in tareas" :key="gIndex">
           <div 
-            v-if="grupo.items.some(item => item.estado === activeTab)"
+            v-if="grupo.items.some(item => item.estado === activeTab && item.title.toLowerCase().includes(searchQuery.toLowerCase()))"
             class="transition-all duration-500 transform"
             :class="isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'"
             :style="{ transitionDelay: `${gIndex * 100 + 100}ms` }"
@@ -294,63 +298,65 @@ const handlePortafolioCreated = (data) => {
             <!-- Filas de Tareas -->
             <div class="space-y-3">
               <div 
-                v-for="tarea in grupo.items.filter(i => i.estado === activeTab)" 
+                v-for="tarea in grupo.items.filter(i => i.estado === activeTab && i.title.toLowerCase().includes(searchQuery.toLowerCase()))" 
                 :key="tarea.id"
-                class="group flex items-center justify-between p-4 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+                class="group flex flex-col p-4 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                 @click="openModal(tarea)"
               >
-                <!-- Lado Izquierdo -->
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 flex items-center justify-center rounded-xl border border-slate-100 shadow-inner" :class="tarea.bgColor">
-                    <svg class="w-6 h-6" :class="tarea.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                <div class="flex items-center justify-between w-full">
+                  <!-- Lado Izquierdo -->
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-xl border border-slate-100 shadow-inner" :class="tarea.bgColor">
+                      <svg class="w-6 h-6" :class="tarea.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-base font-bold transition-colors" :class="tarea.estado === 'vencido' ? 'text-red-600 group-hover:text-red-700' : 'text-blue-600 group-hover:text-blue-700'">
+                        {{ tarea.title }}
+                      </h3>
+                      <p class="text-xs font-bold text-slate-400 mt-0.5 tracking-wide">{{ tarea.classCode }}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 class="text-base font-bold transition-colors" :class="tarea.estado === 'vencido' ? 'text-red-600 group-hover:text-red-700' : 'text-blue-600 group-hover:text-blue-700'">
-                      {{ tarea.title }}
-                    </h3>
-                    <p class="text-xs font-bold text-slate-400 mt-0.5 tracking-wide">{{ tarea.classCode }}</p>
+
+                  <!-- Lado Derecho: Acciones -->
+                  <div class="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity duration-300">
+                    
+                    <!-- ========================================================================= -->
+                    <!-- INTEGRANTE 3: Tarea 2 - Agregar botón de "Subir Archivo" aquí -->
+                    <!-- Al dar clic debe abrir el seleccionador de archivos o mandar a /api/entregas/subir -->
+                    <!-- ========================================================================= -->
+
+                    <button v-if="!(rol === 'ALUMNO' && tarea.calificacion !== null && tarea.calificacion !== undefined)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
-                <!-- Lado Derecho: Acciones -->
-                <div class="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity duration-300">
+                <!-- Sección de Calificación para Alumnos -->
+                <div v-if="tarea.estado === 'completado' && rol === 'ALUMNO'" class="mt-4 border-t pt-4 w-full">
+                  <div v-if="tarea.calificacion !== null && tarea.calificacion !== undefined" class="bg-green-50 border-l-4 border-green-500 p-4 rounded-xl">
+                      <h3 class="text-green-800 font-bold text-lg">
+                          Calificación Obtenida: {{ tarea.calificacion }} / 100
+                      </h3>
+                      <p class="text-green-700 mt-2">
+                          <span class="font-semibold">Retroalimentación del Docente:</span> 
+                          {{ tarea.comentarios || 'No hay comentarios.' }}
+                      </p>
+                  </div>
                   
-                  <!-- ========================================================================= -->
-                  <!-- INTEGRANTE 3: Tarea 2 - Agregar botón de "Subir Archivo" aquí -->
-                  <!-- Al dar clic debe abrir el seleccionador de archivos o mandar a /api/entregas/subir -->
-                  <!-- ========================================================================= -->
-
-                  <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Sección de Calificación para Alumnos -->
-              <div v-if="tarea.estado === 'completado' && rol === 'ALUMNO'" class="mt-4 border-t pt-4 w-full">
-                <div v-if="tarea.calificacion !== null && tarea.calificacion !== undefined" class="bg-green-50 border-l-4 border-green-500 p-4 rounded-xl">
-                    <h3 class="text-green-800 font-bold text-lg">
-                        Calificación Obtenida: {{ tarea.calificacion }} / 100
-                    </h3>
-                    <p class="text-green-700 mt-2">
-                        <span class="font-semibold">Retroalimentación del Docente:</span> 
-                        {{ tarea.comentarios || 'No hay comentarios.' }}
-                    </p>
-                </div>
-                
-                <div v-else class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-xl">
-                    <p class="text-yellow-700 font-medium">
-                        Entregado con éxito. En espera de calificación por parte del docente.
-                    </p>
+                  <div v-else class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-xl">
+                      <p class="text-yellow-700 font-medium">
+                          Entregado con éxito. En espera de calificación por parte del docente.
+                      </p>
+                  </div>
                 </div>
               </div>
             </div>
