@@ -165,4 +165,64 @@ public class EntregaController {
 
         return ResponseEntity.ok(respuesta);
     }
+
+    // =========================================================================
+    // TAREA 3: Ver Lista de Alumnos y Entregas de un Portafolio (Docente)
+    // =========================================================================
+    @GetMapping("/portafolio/{portafolioId}")
+    public ResponseEntity<?> obtenerEntregasPorPortafolio(@PathVariable Long portafolioId, HttpSession session) {
+        
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión");
+        }
+
+        Usuario docente = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        Portafolio portafolio = portafolioRepository.findById(portafolioId).orElse(null);
+
+        if (docente == null || portafolio == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Portafolio no encontrado");
+        }
+
+        // Verificar que el maestro en sesión es el creador de la clase a la que pertenece el portafolio
+        if (!portafolio.getClase().getDocente().getId().equals(docente.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado. No eres el maestro de esta clase.");
+        }
+
+        // Obtener todos los alumnos inscritos en la clase
+        java.util.Set<Usuario> alumnos = portafolio.getClase().getAlumnos();
+        
+        // Obtener todas las entregas que ya se han hecho para este portafolio
+        java.util.List<Entrega> entregas = entregaRepository.findByPortafolioId(portafolioId);
+
+        java.util.List<Map<String, Object>> respuesta = new java.util.ArrayList<>();
+
+        // Mapear cada alumno con su respectiva entrega (si la tiene)
+        for (Usuario alumno : alumnos) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("alumnoId", alumno.getId());
+            item.put("nombreAlumno", alumno.getNombre());
+            item.put("correo", alumno.getCorreo());
+            
+            // Buscar si este alumno en particular ya entregó
+            Entrega entregaAlumno = entregas.stream()
+                .filter(e -> e.getAlumno().getId().equals(alumno.getId()))
+                .findFirst()
+                .orElse(null);
+            
+            if (entregaAlumno != null) {
+                item.put("entregado", true);
+                item.put("entregaId", entregaAlumno.getId());
+                item.put("archivoUrl", entregaAlumno.getArchivoUrl());
+                item.put("calificacion", entregaAlumno.getCalificacion());
+                item.put("fechaEntrega", entregaAlumno.getFechaEntrega());
+                item.put("comentarios", entregaAlumno.getComentarios());
+            } else {
+                item.put("entregado", false);
+            }
+            respuesta.add(item);
+        }
+
+        return ResponseEntity.ok(respuesta);
+    }
 }

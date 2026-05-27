@@ -76,6 +76,12 @@ const cerrarSesion = async () => {
 
           <!-- Vista para usuarios SÍ autenticados -->
           <template v-else>
+            
+            <!-- ========================================================================= -->
+            <!-- INTEGRANTE 3: Tarea 1 - Edición de perfil -->
+            <!-- Agrega aquí el modal o vista de la esquina superior derecha para editar nombre y matrícula -->
+            <!-- ========================================================================= -->
+            
             <span class="text-gray-700 text-sm hidden sm:block">
               Hola, <span class="font-semibold">{{ userName }}</span>
             </span>
