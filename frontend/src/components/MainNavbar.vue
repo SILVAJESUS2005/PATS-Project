@@ -124,13 +124,9 @@ const guardarPerfil = async () => {
       <div class="flex justify-between h-16">
         
         <!-- Logo / Marca -->
-        <div class="flex items-center">
+        <div class="flex items-center" :class="{ 'invisible': ['/login', '/registro'].includes(route.path) }">
           <router-link to="/" class="flex-shrink-0 flex items-center gap-2">
-            <!-- Icono provisional -->
-            <div class="w-8 h-8 bg-blue-600 text-white rounded-md flex items-center justify-center font-bold">
-              P
-            </div>
-            <span class="text-xl font-bold text-gray-900 tracking-tight">PATS</span>
+            <img src="../assets/logo-pats-negro.png" alt="PATS Logo" class="h-20 w-auto object-contain">
           </router-link>
         </div>
 

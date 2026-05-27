@@ -84,13 +84,12 @@ public class PdfService {
                     File file = new File(fileDir + archivo.getArchivoUrl());
                     if (file.exists()) {
                         Image img = Image.getInstance(file.getAbsolutePath());
-                        // Scale image to fit page width
-                        float scaler = ((document.getPageSize().getWidth() - document.leftMargin()
-                                - document.rightMargin() - 0) / img.getWidth()) * 100;
                         
-                        if (scaler < 100) {
-                            img.scalePercent(scaler);
-                        }
+                        float maxWidth = document.getPageSize().getWidth() - document.leftMargin() - document.rightMargin();
+                        float maxHeight = document.getPageSize().getHeight() - document.topMargin() - document.bottomMargin() - 50; // Leave some space
+                        
+                        img.scaleToFit(maxWidth, maxHeight);
+                        img.setAlignment(Element.ALIGN_CENTER);
                         
                         document.add(img);
                     } else {

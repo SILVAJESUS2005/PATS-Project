@@ -97,7 +97,7 @@ const submitEvaluacion = async () => {
 
 const getArchivosPorCategoria = (categoria) => {
   if (!entrega.value || !entrega.value.archivos) return []
-  return entrega.value.archivos.filter(a => a.categoriaEvidencia === categoria)
+  return entrega.value.archivos.filter(a => a.categoria === categoria)
 }
 
 const enlargedImageUrl = ref(null)
@@ -158,7 +158,7 @@ const closeEnlargedImage = () => {
             <div v-if="getArchivosPorCategoria('ACTIVIDADES_CLASE').length">
               <h4 class="text-lg font-bold text-blue-800 bg-blue-50 py-2 px-4 rounded-lg mb-4">Actividades de Clase</h4>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <img v-for="(arch, i) in getArchivosPorCategoria('ACTIVIDADES_CLASE')" :key="i" :src="`http://localhost:8080/api/entregas/descargar/${arch.archivoUrl}`" class="w-full h-48 object-cover rounded-xl shadow border border-slate-200 hover:scale-105 transition cursor-pointer" alt="Evidencia" @click="enlargeImage(`http://localhost:8080/api/entregas/descargar/${arch.archivoUrl}`)">
+                <img v-for="(arch, i) in getArchivosPorCategoria('ACTIVIDADES_CLASE')" :key="i" :src="`http://localhost:8080/api/entregas/descargar/${arch.url}`" class="w-full h-48 object-cover rounded-xl shadow border border-slate-200 hover:scale-105 transition cursor-pointer" alt="Evidencia" @click="enlargeImage(`http://localhost:8080/api/entregas/descargar/${arch.url}`)">
               </div>
             </div>
 
@@ -166,7 +166,7 @@ const closeEnlargedImage = () => {
             <div v-if="getArchivosPorCategoria('TAREAS_CASA').length">
               <h4 class="text-lg font-bold text-green-800 bg-green-50 py-2 px-4 rounded-lg mb-4 mt-6">Tareas en Casa</h4>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <img v-for="(arch, i) in getArchivosPorCategoria('TAREAS_CASA')" :key="i" :src="`http://localhost:8080/api/entregas/descargar/${arch.archivoUrl}`" class="w-full h-48 object-cover rounded-xl shadow border border-slate-200 hover:scale-105 transition cursor-pointer" alt="Evidencia" @click="enlargeImage(`http://localhost:8080/api/entregas/descargar/${arch.archivoUrl}`)">
+                <img v-for="(arch, i) in getArchivosPorCategoria('TAREAS_CASA')" :key="i" :src="`http://localhost:8080/api/entregas/descargar/${arch.url}`" class="w-full h-48 object-cover rounded-xl shadow border border-slate-200 hover:scale-105 transition cursor-pointer" alt="Evidencia" @click="enlargeImage(`http://localhost:8080/api/entregas/descargar/${arch.url}`)">
               </div>
             </div>
 
@@ -174,7 +174,7 @@ const closeEnlargedImage = () => {
             <div v-if="getArchivosPorCategoria('EXAMEN_PROYECTO').length">
               <h4 class="text-lg font-bold text-purple-800 bg-purple-50 py-2 px-4 rounded-lg mb-4 mt-6">Examen / Proyecto</h4>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <img v-for="(arch, i) in getArchivosPorCategoria('EXAMEN_PROYECTO')" :key="i" :src="`http://localhost:8080/api/entregas/descargar/${arch.archivoUrl}`" class="w-full h-48 object-cover rounded-xl shadow border border-slate-200 hover:scale-105 transition cursor-pointer" alt="Evidencia" @click="enlargeImage(`http://localhost:8080/api/entregas/descargar/${arch.archivoUrl}`)">
+                <img v-for="(arch, i) in getArchivosPorCategoria('EXAMEN_PROYECTO')" :key="i" :src="`http://localhost:8080/api/entregas/descargar/${arch.url}`" class="w-full h-48 object-cover rounded-xl shadow border border-slate-200 hover:scale-105 transition cursor-pointer" alt="Evidencia" @click="enlargeImage(`http://localhost:8080/api/entregas/descargar/${arch.url}`)">
               </div>
             </div>
           </div>
