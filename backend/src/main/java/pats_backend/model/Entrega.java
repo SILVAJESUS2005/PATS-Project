@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "entregas")
@@ -13,8 +15,14 @@ public class Entrega {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "archivo_url", nullable = false)
-    private String archivoUrl;
+    @Column(columnDefinition = "TEXT")
+    private String introduccion;
+
+    @Column(columnDefinition = "TEXT")
+    private String conclusion;
+
+    @OneToMany(mappedBy = "entrega", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EvidenciaArchivo> archivos = new ArrayList<>();
 
     @Column(name = "fecha_entrega")
     private LocalDateTime fechaEntrega;
@@ -49,12 +57,33 @@ public class Entrega {
         this.id = id;
     }
 
-    public String getArchivoUrl() {
-        return archivoUrl;
+    public String getIntroduccion() {
+        return introduccion;
     }
 
-    public void setArchivoUrl(String archivoUrl) {
-        this.archivoUrl = archivoUrl;
+    public void setIntroduccion(String introduccion) {
+        this.introduccion = introduccion;
+    }
+
+    public String getConclusion() {
+        return conclusion;
+    }
+
+    public void setConclusion(String conclusion) {
+        this.conclusion = conclusion;
+    }
+
+    public List<EvidenciaArchivo> getArchivos() {
+        return archivos;
+    }
+
+    public void setArchivos(List<EvidenciaArchivo> archivos) {
+        this.archivos = archivos;
+    }
+
+    public void addArchivo(EvidenciaArchivo archivo) {
+        archivos.add(archivo);
+        archivo.setEntrega(this);
     }
 
     public LocalDateTime getFechaEntrega() {

@@ -159,4 +159,19 @@ public class AuthController {
 
         return ResponseEntity.ok(respuesta);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> obtenerUsuarioActual(HttpSession session) {
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(401).body("No hay sesión activa");
+        }
+        
+        Optional<Usuario> usuarioDb = usuarioRepository.findById(usuarioSession.getId());
+        if (usuarioDb.isPresent()) {
+            return ResponseEntity.ok(usuarioDb.get());
+        }
+        
+        return ResponseEntity.status(401).body("Usuario no encontrado en DB");
+    }
 }

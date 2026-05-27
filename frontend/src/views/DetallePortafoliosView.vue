@@ -35,11 +35,17 @@ const fetchPortafolios = async () => {
   }
 
   isLoadingPortafolios.value = true
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 8000)
+
   try {
     const response = await fetch(`http://localhost:8080/api/portafolios/clase/${claseId}`, {
-      credentials: 'include'
+      credentials: 'include',
+      signal: controller.signal
     })
     
+    clearTimeout(timeoutId)
+
     if (!response.ok) {
       throw new Error('Error al obtener los portafolios de la clase.')
     }
@@ -47,7 +53,11 @@ const fetchPortafolios = async () => {
     const data = await response.json()
     formatPortafolios(data)
   } catch (error) {
-    errorMessage.value = error.message
+    if (error.name === 'AbortError') {
+      errorMessage.value = "La petición tardó demasiado. El servidor no responde."
+    } else {
+      errorMessage.value = error.message
+    }
   } finally {
     isLoadingPortafolios.value = false
     setTimeout(() => isLoaded.value = true, 100)
@@ -101,7 +111,9 @@ const formatPortafolios = (portafoliosReales) => {
       classCode: claseNombre.value,
       estado: estado,
       iconColor: iconColor,
-      bgColor: bgColor
+      bgColor: bgColor,
+      calificacion: p.calificacion !== undefined ? p.calificacion : (p.entrega ? p.entrega.calificacion : null),
+      comentarios: p.comentarios !== undefined ? p.comentarios : (p.entrega ? p.entrega.comentarios : null)
     })
   })
   
@@ -116,7 +128,7 @@ const openModal = (tarea) => {
   const userRole = localStorage.getItem('user_role')
   selectedPortafolio.value = tarea.title
 
-  if (userRole === 'USER') {
+  if (userRole === 'ALUMNO') {
     selectedPortafolioId.value = tarea.id
     showUploadModal.value = true
     return
@@ -320,6 +332,25 @@ const handlePortafolioCreated = (data) => {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                     </svg>
                   </button>
+                </div>
+              </div>
+
+              <!-- Sección de Calificación para Alumnos -->
+              <div v-if="tarea.estado === 'completado' && rol === 'ALUMNO'" class="mt-4 border-t pt-4 w-full">
+                <div v-if="tarea.calificacion !== null && tarea.calificacion !== undefined" class="bg-green-50 border-l-4 border-green-500 p-4 rounded-xl">
+                    <h3 class="text-green-800 font-bold text-lg">
+                        Calificación Obtenida: {{ tarea.calificacion }} / 100
+                    </h3>
+                    <p class="text-green-700 mt-2">
+                        <span class="font-semibold">Retroalimentación del Docente:</span> 
+                        {{ tarea.comentarios || 'No hay comentarios.' }}
+                    </p>
+                </div>
+                
+                <div v-else class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-xl">
+                    <p class="text-yellow-700 font-medium">
+                        Entregado con éxito. En espera de calificación por parte del docente.
+                    </p>
                 </div>
               </div>
             </div>

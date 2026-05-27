@@ -5,10 +5,14 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
+  },
+  mandatory: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['profile-updated'])
+const emit = defineEmits(['profile-updated', 'close'])
 
 const form = reactive({
   nombre: localStorage.getItem('user_name') || '',
@@ -86,14 +90,22 @@ const saveProfile = async () => {
           />
         </div>
 
-        <div class="pt-4">
+        <div class="pt-4 flex gap-3">
+          <button 
+            v-if="!mandatory"
+            type="button" 
+            @click="$emit('close')"
+            class="w-full py-2.5 px-4 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none transition-colors"
+          >
+            Cancelar
+          </button>
           <button 
             type="submit" 
             :disabled="isLoading"
             class="w-full py-2.5 px-4 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
           >
             <span v-if="isLoading">Guardando...</span>
-            <span v-else>Guardar y Continuar</span>
+            <span v-else>Guardar Datos</span>
           </button>
         </div>
       </form>
