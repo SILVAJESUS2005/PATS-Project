@@ -14,6 +14,7 @@ import pats_backend.dto.CrearPortafolioDTO;
 import pats_backend.repository.ClaseRepository;
 import pats_backend.repository.PortafolioRepository;
 import pats_backend.repository.UsuarioRepository;
+import pats_backend.repository.EntregaRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,13 +29,16 @@ public class PortafolioController {
     private final PortafolioRepository portafolioRepository;
     private final ClaseRepository claseRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EntregaRepository entregaRepository;
 
     public PortafolioController(PortafolioRepository portafolioRepository, 
                                  ClaseRepository claseRepository, 
-                                 UsuarioRepository usuarioRepository) {
+                                 UsuarioRepository usuarioRepository,
+                                 EntregaRepository entregaRepository) {
         this.portafolioRepository = portafolioRepository;
         this.claseRepository = claseRepository;
         this.usuarioRepository = usuarioRepository;
+        this.entregaRepository = entregaRepository;
     }
 
     @PostMapping
@@ -148,6 +152,13 @@ public class PortafolioController {
             item.put("descripcion", p.getDescripcion());
             item.put("fechaCreacion", p.getFechaCreacion());
             item.put("fechaLimite", p.getFechaLimite());
+            
+            // Validar estado de entrega para el alumno
+            if ("USER".equals(usuario.getRol())) {
+                boolean entregado = entregaRepository.existsByPortafolioAndAlumno(p, usuario);
+                item.put("entregado", entregado);
+            }
+            
             respuesta.add(item);
         }
 
