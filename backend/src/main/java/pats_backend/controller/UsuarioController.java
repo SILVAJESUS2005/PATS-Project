@@ -59,6 +59,8 @@ public class UsuarioController {
         usuarioDb.setNombre(dto.getNombre());
         if ("ALUMNO".equals(usuarioDb.getRol())) {
             usuarioDb.setMatricula(dto.getMatricula());
+        } else if ("DOCENTE".equals(usuarioDb.getRol())) {
+            usuarioDb.setMatricula("DOCENTE_CONFIRMADO");
         }
 
         usuarioRepository.save(usuarioDb);

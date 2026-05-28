@@ -80,7 +80,7 @@ onMounted(() => {
     if (data.rol === 'ALUMNO' && (!data.matricula || !data.nombre)) {
       showProfileModal.value = true
       isMandatory.value = true
-    } else if (data.rol === 'DOCENTE' && !profileCompleted) {
+    } else if (data.rol === 'DOCENTE' && data.matricula !== 'DOCENTE_CONFIRMADO') {
       showProfileModal.value = true
       isMandatory.value = true
     }
