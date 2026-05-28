@@ -41,6 +41,7 @@ const cerrarSesion = async () => {
   localStorage.removeItem('user_name')
   localStorage.removeItem('user_role')
   localStorage.removeItem('user_matricula')
+  localStorage.removeItem('profile_completed')
   isAuth.value = false
   router.push('/login')
 }
