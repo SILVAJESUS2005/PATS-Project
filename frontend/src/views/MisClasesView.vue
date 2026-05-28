@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import JoinClassModal from '../components/JoinClassModal.vue'
 import CreateClassModal from '../components/CreateClassModal.vue'
+import ProfileModal from '../components/ProfileModal.vue'
 
 const router = useRouter()
 
@@ -25,6 +26,10 @@ const clases = ref([])
 const isLoaded = ref(false)
 const showAddClassModal = ref(false)
 const showCreateClassModal = ref(false)
+
+const showProfileModal = ref(false)
+const isMandatory = ref(false)
+const usuario = ref({})
 
 const fetchClases = async () => {
   try {
@@ -61,6 +66,25 @@ onMounted(() => {
   window.addEventListener('profile-updated', () => {
     userName.value = localStorage.getItem('user_name') || 'Alumno'
   })
+
+  // Checar si necesita completar perfil
+  fetch('http://localhost:8080/api/auth/me', {
+    credentials: 'include'
+  }).then(res => {
+    if (res.ok) return res.json()
+    throw new Error('No autorizado')
+  }).then(data => {
+    usuario.value = data
+    const profileCompleted = localStorage.getItem('profile_completed')
+    
+    if (data.rol === 'ALUMNO' && (!data.matricula || !data.nombre)) {
+      showProfileModal.value = true
+      isMandatory.value = true
+    } else if (data.rol === 'DOCENTE' && !profileCompleted) {
+      showProfileModal.value = true
+      isMandatory.value = true
+    }
+  }).catch(err => console.error('Error fetching user data:', err))
 })
 
 const navigateToPortafolios = (clase) => {
@@ -86,6 +110,14 @@ const openAddClassModal = () => {
 const handleClassJoinedOrCreated = (data) => {
   console.log("¡Operación exitosa!", data)
   fetchClases()
+}
+
+const onProfileSaved = (data) => {
+  localStorage.setItem('user_matricula', data.matricula)
+  localStorage.setItem('user_name', data.nombre)
+  localStorage.setItem('profile_completed', 'true')
+  showProfileModal.value = false
+  userName.value = data.nombre
 }
 </script>
 
@@ -243,6 +275,13 @@ const handleClassJoinedOrCreated = (data) => {
         :show="showCreateClassModal"
         @close="showCreateClassModal = false"
         @created="handleClassJoinedOrCreated"
+      />
+
+      <ProfileModal 
+        :is-open="showProfileModal" 
+        :mandatory="isMandatory"
+        @profile-updated="onProfileSaved" 
+        @close="showProfileModal = false"
       />
 
     </div>

@@ -8,6 +8,8 @@ const userName = ref('')
 const userRole = ref('')
 const showProfileModal = ref(false)
 const isMandatory = ref(false)
+const isProfileModalMandatory = ref(false)
+const isLoaded = ref(false)
 const usuario = ref({})
 
 // Al cargar la página, leemos la "sesión" (localStorage)
@@ -34,6 +36,9 @@ onMounted(async () => {
       
       // Validación ineludible
       if (usuario.value.rol === 'ALUMNO' && (!usuario.value.matricula || !usuario.value.nombre)) {
+        showProfileModal.value = true
+        isMandatory.value = true
+      } else if (usuario.value.rol === 'DOCENTE' && !usuario.value.nombre) {
         showProfileModal.value = true
         isMandatory.value = true
       }

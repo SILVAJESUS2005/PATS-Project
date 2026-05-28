@@ -59,10 +59,10 @@ public class AuthController {
         // Encriptar contraseña con BCrypt
         nuevoUsuario.setPassword(passwordEncoder.encode(registroDTO.getPassword()));
         
-        // Si no se especifica rol, asignamos "USER" (Alumno) por defecto
+        // Si no se especifica rol, asignamos "ALUMNO" por defecto
         String rol = registroDTO.getRol();
         if (rol == null || rol.trim().isEmpty()) {
-            rol = "USER";
+            rol = "ALUMNO";
         } else {
             rol = rol.trim().toUpperCase();
         }
@@ -95,6 +95,7 @@ public class AuthController {
                 respuesta.put("nombre", usuarioEncontrado.getNombre());
                 respuesta.put("correo", usuarioEncontrado.getCorreo());
                 respuesta.put("rol", usuarioEncontrado.getRol());
+                respuesta.put("matricula", usuarioEncontrado.getMatricula() != null ? usuarioEncontrado.getMatricula() : "");
 
                 return ResponseEntity.ok(respuesta);
             }

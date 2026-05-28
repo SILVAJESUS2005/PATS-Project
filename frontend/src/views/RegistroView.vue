@@ -13,7 +13,7 @@ const formulario = ref({
   correo: '',
   password: '',
   confirmarPassword: '',
-  rol: 'USER'
+  rol: 'ALUMNO'
 })
 
 // Estado de errores y mensajes
@@ -84,7 +84,7 @@ const procesarRegistro = async () => {
     mensajeExito.value = data.mensaje || '¡Cuenta creada exitosamente! Redirigiendo al login...'
     
     setTimeout(() => {
-      formulario.value = { nombre: '', apellidos: '', correo: '', password: '', confirmarPassword: '', rol: 'USER' }
+      formulario.value = { nombre: '', apellidos: '', correo: '', password: '', confirmarPassword: '', rol: 'ALUMNO' }
       router.push('/login')
     }, 2000)
     // ---------------------------------------------------------
@@ -124,9 +124,9 @@ const procesarRegistro = async () => {
         <div class="grid grid-cols-2 gap-4">
           <button 
             type="button"
-            @click="formulario.rol = 'USER'"
+            @click="formulario.rol = 'ALUMNO'"
             class="flex flex-col items-center justify-center p-4 border rounded-2xl transition-all duration-300 shadow-sm"
-            :class="formulario.rol === 'USER' ? 'border-blue-600 bg-blue-50/50 text-blue-600 ring-2 ring-blue-600/20' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
+            :class="formulario.rol === 'ALUMNO' ? 'border-blue-600 bg-blue-50/50 text-blue-600 ring-2 ring-blue-600/20' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
           >
             <span class="text-2xl mb-1">🎓</span>
             <span class="font-extrabold text-xs sm:text-sm">Alumno</span>

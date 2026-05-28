@@ -62,8 +62,8 @@ const abrirModalPerfil = () => {
 }
 
 const guardarPerfil = async () => {
-  if (!perfilNombre.value.trim() || !perfilMatricula.value.trim()) {
-    profileErrorMessage.value = 'El nombre y la matrícula son requeridos.'
+  if (!perfilNombre.value.trim() || (userRole.value === 'ALUMNO' && !perfilMatricula.value.trim())) {
+    profileErrorMessage.value = 'Todos los campos son requeridos.'
     return
   }
 
@@ -124,13 +124,9 @@ const guardarPerfil = async () => {
       <div class="flex justify-between h-16">
         
         <!-- Logo / Marca -->
-        <div class="flex items-center">
+        <div class="flex items-center" :class="{ 'invisible': ['/login', '/registro'].includes(route.path) }">
           <router-link to="/" class="flex-shrink-0 flex items-center gap-2">
-            <!-- Icono provisional -->
-            <div class="w-8 h-8 bg-blue-600 text-white rounded-md flex items-center justify-center font-bold">
-              P
-            </div>
-            <span class="text-xl font-bold text-gray-900 tracking-tight">PATS</span>
+            <img src="../assets/logo-pats-negro.png" alt="PATS Logo" class="h-20 w-auto object-contain">
           </router-link>
         </div>
 
@@ -166,7 +162,6 @@ const guardarPerfil = async () => {
             </span>
             
             <button 
-              v-if="userRole === 'ALUMNO'"
               @click="abrirModalPerfil"
               class="inline-flex items-center px-3.5 py-1.5 border border-slate-200 text-sm font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer shadow-sm"
             >
@@ -209,6 +204,7 @@ const guardarPerfil = async () => {
 
           <!-- Campo Matrícula -->
           <AuthInput
+            v-if="userRole === 'ALUMNO'"
             id="perfil-matricula"
             label="Matrícula"
             type="text"

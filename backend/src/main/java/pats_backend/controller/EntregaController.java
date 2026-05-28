@@ -23,12 +23,14 @@ import pats_backend.repository.EntregaRepository;
 import pats_backend.repository.UsuarioRepository;
 import pats_backend.repository.PortafolioRepository;
 import pats_backend.service.FileStorageService;
+import pats_backend.service.PdfService;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/entregas")
@@ -39,15 +41,55 @@ public class EntregaController {
     private final UsuarioRepository usuarioRepository;
     private final PortafolioRepository portafolioRepository;
     private final FileStorageService fileStorageService;
+    private final PdfService pdfService;
 
     public EntregaController(EntregaRepository entregaRepository,
             UsuarioRepository usuarioRepository,
             PortafolioRepository portafolioRepository,
-            FileStorageService fileStorageService) {
+            FileStorageService fileStorageService,
+            PdfService pdfService) {
         this.entregaRepository = entregaRepository;
         this.usuarioRepository = usuarioRepository;
         this.portafolioRepository = portafolioRepository;
         this.fileStorageService = fileStorageService;
+        this.pdfService = pdfService;
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> descargarPdfPortafolio(@PathVariable Long id, HttpSession session) {
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Optional<Entrega> entregaOpt = entregaRepository.findById(id);
+        if (entregaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        Entrega entrega = entregaOpt.get();
+
+        // Security check: Only the student or the teacher of the class can download
+        boolean isStudent = entrega.getAlumno().getId().equals(usuarioSession.getId());
+        boolean isTeacher = entrega.getPortafolio().getClase().getDocente().getId().equals(usuarioSession.getId());
+
+        if (!isStudent && !isTeacher) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            byte[] pdfBytes = pdfService.generatePortafolioPdf(entrega);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "portafolio_" + entrega.getId() + ".pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     // =========================================================================
@@ -74,11 +116,21 @@ public class EntregaController {
         }
 
         try {
-            Entrega entrega = new Entrega();
+            Entrega entrega = entregaRepository.findByPortafolioAndAlumno(portafolio, alumno).orElse(new Entrega());
+            
+            if (entrega.getCalificacion() != null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("El portafolio ya ha sido calificado y no se puede editar.");
+            }
+            
             entrega.setIntroduccion(introduccion);
             entrega.setConclusion(conclusiones);
             entrega.setAlumno(alumno);
             entrega.setPortafolio(portafolio);
+
+            // Limpiar archivos anteriores si se está editando
+            if (entrega.getArchivos() != null) {
+                entrega.getArchivos().clear();
+            }
 
             guardarArchivosCategoria(entrega, actividadesClase, CategoriaEvidencia.ACTIVIDADES_CLASE);
             guardarArchivosCategoria(entrega, tareasCasa, CategoriaEvidencia.TAREAS_CASA);

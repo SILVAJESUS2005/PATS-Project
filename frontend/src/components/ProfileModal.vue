@@ -14,16 +14,18 @@ const props = defineProps({
 
 const emit = defineEmits(['profile-updated', 'close'])
 
+const userRole = localStorage.getItem('user_role') || 'ALUMNO'
+
 const form = reactive({
   nombre: localStorage.getItem('user_name') || '',
-  matricula: ''
+  matricula: localStorage.getItem('user_matricula') || ''
 })
 
 const isLoading = ref(false)
 const errorMessage = ref('')
 
 const saveProfile = async () => {
-  if (!form.nombre || !form.matricula) {
+  if (!form.nombre || (userRole === 'ALUMNO' && !form.matricula)) {
     errorMessage.value = 'Todos los campos son obligatorios.'
     return
   }
@@ -62,8 +64,11 @@ const saveProfile = async () => {
         </svg>
       </div>
       <h2 class="text-xl font-bold text-gray-900 text-center mb-2">Información Incompleta</h2>
-      <p class="text-sm text-gray-500 text-center mb-6">
+      <p v-if="userRole === 'ALUMNO'" class="text-sm text-gray-500 text-center mb-6">
         Como alumno, es obligatorio que registres tu Matrícula y Nombre Completo para la generación automática de las portadas de tus evidencias.
+      </p>
+      <p v-else class="text-sm text-gray-500 text-center mb-6">
+        Como docente, es necesario que registres tu Nombre Completo correctamente.
       </p>
 
       <div v-if="errorMessage" class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
@@ -80,7 +85,7 @@ const saveProfile = async () => {
             placeholder="Ej. Juan Pérez"
           />
         </div>
-        <div>
+        <div v-if="userRole === 'ALUMNO'">
           <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
           <input 
             type="text" 
