@@ -163,6 +163,7 @@ const procesarRegistro = async () => {
         id="correo" 
         label="Correo Electrónico" 
         type="email" 
+        autocomplete="username"
         placeholder="ejemplo@correo.com" 
         v-model="formulario.correo" 
         :errorMessage="errores.correo"
@@ -172,6 +173,7 @@ const procesarRegistro = async () => {
         id="password" 
         label="Contraseña" 
         type="password" 
+        autocomplete="new-password"
         v-model="formulario.password" 
         :errorMessage="errores.password"
       />
@@ -180,6 +182,7 @@ const procesarRegistro = async () => {
         id="confirmarPassword" 
         label="Confirmar Contraseña" 
         type="password" 
+        autocomplete="new-password"
         v-model="formulario.confirmarPassword" 
         :errorMessage="errores.confirmarPassword"
       />

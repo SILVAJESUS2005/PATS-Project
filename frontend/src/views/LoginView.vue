@@ -96,13 +96,15 @@ const finalizeLogin = (rol) => {
 
 onMounted(() => {
   if (window.google) {
+    // Evitar inicializaciones duplicadas
+    const clientId = GOOGLE_CLIENT_ID;
     window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
+      client_id: clientId,
       callback: handleGoogleResponse
     });
     window.google.accounts.id.renderButton(
       document.getElementById("google-buttonDiv"),
-      { theme: "outline", size: "large", width: "100%" }
+      { theme: "outline", size: "large", width: 300 } // Ancho válido en px, no %
     );
   }
 })
@@ -132,6 +134,7 @@ onMounted(() => {
         id="email" 
         label="Correo Electrónico" 
         type="email" 
+        autocomplete="username"
         placeholder="ejemplo@correo.com" 
         v-model="loginForm.email" 
       />
@@ -140,6 +143,7 @@ onMounted(() => {
         id="password" 
         label="Contraseña" 
         type="password" 
+        autocomplete="current-password"
         placeholder="••••••••" 
         v-model="loginForm.password" 
       />

@@ -40,6 +40,7 @@ defineEmits(['update:modelValue'])
       :type="type" 
       :placeholder="placeholder"
       :value="modelValue"
+      v-bind="$attrs"
       @input="$emit('update:modelValue', $event.target.value)"
       class="appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm transition-all duration-200"
       :class="[
