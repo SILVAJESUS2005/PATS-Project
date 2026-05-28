@@ -3,6 +3,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '../components/AuthLayout.vue'
 import AuthInput from '../components/AuthInput.vue'
+import RoleSelectionModal from '../components/RoleSelectionModal.vue'
 
 // TODO: Reemplaza con tu Client ID
 const GOOGLE_CLIENT_ID = "294864417020-usltovtittatrqk6rl8d107tqgc6ne3h.apps.googleusercontent.com"
@@ -17,6 +18,7 @@ const loginForm = reactive({
 
 const errorMessage = ref('')
 const isLoading = ref(false)
+const showRoleModal = ref(false)
 
 const realizarLogin = async () => {
   isLoading.value = true
@@ -44,6 +46,7 @@ const realizarLogin = async () => {
     localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
     localStorage.setItem('user_name', data.nombre)
     localStorage.setItem('user_role', data.rol)
+    if (data.matricula) localStorage.setItem('user_matricula', data.matricula)
     
     router.push('/dashboard')
     // ---------------------------------------------------------
@@ -72,12 +75,23 @@ const handleGoogleResponse = async (response) => {
     localStorage.setItem('auth_token', 'sesion-activa-spring-boot')
     localStorage.setItem('user_name', data.nombre)
     localStorage.setItem('user_role', data.rol)
-    router.push('/dashboard')
+    if (data.matricula) localStorage.setItem('user_matricula', data.matricula)
+    
+    if (data.rol === 'PENDIENTE') {
+      showRoleModal.value = true
+    } else {
+      router.push('/dashboard')
+    }
   } catch (error) {
     errorMessage.value = error.message
   } finally {
     isLoading.value = false
   }
+}
+
+const finalizeLogin = (rol) => {
+  showRoleModal.value = false
+  router.push('/dashboard')
 }
 
 onMounted(() => {
@@ -172,4 +186,7 @@ onMounted(() => {
       </div>
     </form>
   </AuthLayout>
+
+  <!-- Modal Ineludible de Selección de Rol -->
+  <RoleSelectionModal :is-open="showRoleModal" @role-updated="finalizeLogin" />
 </template>

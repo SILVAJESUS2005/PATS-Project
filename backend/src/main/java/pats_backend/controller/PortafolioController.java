@@ -14,6 +14,7 @@ import pats_backend.dto.CrearPortafolioDTO;
 import pats_backend.repository.ClaseRepository;
 import pats_backend.repository.PortafolioRepository;
 import pats_backend.repository.UsuarioRepository;
+import pats_backend.repository.EntregaRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,20 +29,23 @@ public class PortafolioController {
     private final PortafolioRepository portafolioRepository;
     private final ClaseRepository claseRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EntregaRepository entregaRepository;
 
-    public PortafolioController(PortafolioRepository portafolioRepository, 
-                                 ClaseRepository claseRepository, 
-                                 UsuarioRepository usuarioRepository) {
+    public PortafolioController(PortafolioRepository portafolioRepository,
+            ClaseRepository claseRepository,
+            UsuarioRepository usuarioRepository,
+            EntregaRepository entregaRepository) {
         this.portafolioRepository = portafolioRepository;
         this.claseRepository = claseRepository;
         this.usuarioRepository = usuarioRepository;
+        this.entregaRepository = entregaRepository;
     }
 
     @PostMapping
-    public ResponseEntity<?> crearAsignacion(@Valid @RequestBody CrearPortafolioDTO crearPortafolioDTO, 
-                                             BindingResult result, 
-                                             HttpSession session) {
-        
+    public ResponseEntity<?> crearAsignacion(@Valid @RequestBody CrearPortafolioDTO crearPortafolioDTO,
+            BindingResult result,
+            HttpSession session) {
+
         // 1. Validar errores de validación de entrada
         if (result.hasErrors()) {
             Map<String, String> errores = new HashMap<>();
@@ -54,7 +58,8 @@ public class PortafolioController {
         // 2. Obtener el usuario autenticado de la sesión
         Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
         if (usuarioSession == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión para realizar esta acción");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Debes iniciar sesión para realizar esta acción");
         }
 
         // Obtener el docente fresco de la base de datos de Azure
@@ -71,7 +76,8 @@ public class PortafolioController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
         }
 
-        // 4. Validar Seguridad: Solo el docente que CREÓ la clase puede crear tareas en ella
+        // 4. Validar Seguridad: Solo el docente que CREÓ la clase puede crear tareas en
+        // ella
         if (!clase.getDocente().getId().equals(docente.getId())) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Acceso denegado: Solo el docente creador de esta clase puede añadir tareas");
@@ -104,11 +110,12 @@ public class PortafolioController {
 
     @GetMapping("/clase/{claseId}")
     public ResponseEntity<?> obtenerPortafoliosPorClase(@PathVariable Long claseId, HttpSession session) {
-        
+
         // 1. Validar sesión
         Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
         if (usuarioSession == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión para realizar esta acción");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Debes iniciar sesión para realizar esta acción");
         }
 
         // Obtener el usuario fresco de Azure
@@ -126,7 +133,8 @@ public class PortafolioController {
         }
 
         // 3. Control de Seguridad:
-        // Solo el docente creador o los alumnos matriculados en la clase pueden ver las asignaciones
+        // Solo el docente creador o los alumnos matriculados en la clase pueden ver las
+        // asignaciones
         boolean esDocenteCreador = clase.getDocente().getId().equals(usuario.getId());
         boolean esAlumnoInscrito = clase.getAlumnos().stream().anyMatch(a -> a.getId().equals(usuario.getId()));
 
@@ -139,6 +147,13 @@ public class PortafolioController {
         // 4. Obtener todos los portafolios asociados de Azure
         List<Portafolio> portafolios = portafolioRepository.findByClaseId(claseId);
 
+        // 4.1 Para evitar el problema N+1, precargamos las entregas del alumno para
+        // esta clase
+        List<pats_backend.model.Entrega> entregasDelAlumno = new ArrayList<>();
+        if ("ALUMNO".equals(usuario.getRol())) {
+            entregasDelAlumno = entregaRepository.findByAlumnoAndPortafolioClaseId(usuario, claseId);
+        }
+
         // 5. Mapear a respuesta segura libre de recursión circular JSON
         List<Map<String, Object>> respuesta = new ArrayList<>();
         for (Portafolio p : portafolios) {
@@ -148,9 +163,77 @@ public class PortafolioController {
             item.put("descripcion", p.getDescripcion());
             item.put("fechaCreacion", p.getFechaCreacion());
             item.put("fechaLimite", p.getFechaLimite());
+
+            // Validar estado de entrega para el alumno
+            if ("ALUMNO".equals(usuario.getRol())) {
+                pats_backend.model.Entrega entrega = entregasDelAlumno.stream()
+                        .filter(e -> e.getPortafolio().getId().equals(p.getId()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (entrega != null) {
+                    item.put("entregado", true);
+                    item.put("entregaId", entrega.getId());
+                    item.put("calificacion", entrega.getCalificacion());
+                    item.put("comentarios", entrega.getComentarios());
+                } else {
+                    item.put("entregado", false);
+                }
+            }
+
             respuesta.add(item);
         }
 
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @GetMapping("/mis-portafolios")
+    public ResponseEntity<?> obtenerTodosMisPortafolios(HttpSession session) {
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Debes iniciar sesión");
+        }
+
+        Usuario usuario = usuarioRepository.findById(usuarioSession.getId()).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado");
+        }
+
+        List<Map<String, Object>> respuesta = new ArrayList<>();
+
+        if ("ALUMNO".equals(usuario.getRol())) {
+            List<Clase> misClases = claseRepository.findByAlumnosId(usuario.getId());
+            for (Clase clase : misClases) {
+                List<Portafolio> portafolios = portafolioRepository.findByClaseId(clase.getId());
+                List<pats_backend.model.Entrega> entregasDelAlumno = entregaRepository.findByAlumnoAndPortafolioClaseId(usuario, clase.getId());
+                
+                for (Portafolio p : portafolios) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", p.getId());
+                    item.put("titulo", p.getTitulo());
+                    item.put("descripcion", p.getDescripcion());
+                    item.put("fechaCreacion", p.getFechaCreacion());
+                    item.put("fechaLimite", p.getFechaLimite());
+                    item.put("claseNombre", clase.getNombre());
+                    item.put("claseId", clase.getId());
+
+                    pats_backend.model.Entrega entrega = entregasDelAlumno.stream()
+                            .filter(e -> e.getPortafolio().getId().equals(p.getId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (entrega != null) {
+                        item.put("entregado", true);
+                        item.put("entregaId", entrega.getId());
+                        item.put("calificacion", entrega.getCalificacion());
+                        item.put("comentarios", entrega.getComentarios());
+                    } else {
+                        item.put("entregado", false);
+                    }
+                    respuesta.add(item);
+                }
+            }
+        }
         return ResponseEntity.ok(respuesta);
     }
 }

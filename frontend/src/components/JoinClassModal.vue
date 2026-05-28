@@ -34,10 +34,16 @@ const unirseClase = async () => {
       credentials: 'include' // IMPORTANTE: Para que Spring Boot sepa quién somos
     })
 
-    const data = await response.json()
+    const dataText = await response.text()
+    let data;
+    try {
+      data = JSON.parse(dataText)
+    } catch (e) {
+      data = { error: dataText }
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || 'Error al unirse a la clase')
+      throw new Error(data.error || dataText || 'Error al unirse a la clase')
     }
 
     emit('joined', data)

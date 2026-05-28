@@ -59,10 +59,10 @@ public class AuthController {
         // Encriptar contraseña con BCrypt
         nuevoUsuario.setPassword(passwordEncoder.encode(registroDTO.getPassword()));
         
-        // Si no se especifica rol, asignamos "USER" (Alumno) por defecto
+        // Si no se especifica rol, asignamos "ALUMNO" por defecto
         String rol = registroDTO.getRol();
         if (rol == null || rol.trim().isEmpty()) {
-            rol = "USER";
+            rol = "ALUMNO";
         } else {
             rol = rol.trim().toUpperCase();
         }
@@ -95,6 +95,7 @@ public class AuthController {
                 respuesta.put("nombre", usuarioEncontrado.getNombre());
                 respuesta.put("correo", usuarioEncontrado.getCorreo());
                 respuesta.put("rol", usuarioEncontrado.getRol());
+                respuesta.put("matricula", usuarioEncontrado.getMatricula() != null ? usuarioEncontrado.getMatricula() : "");
 
                 return ResponseEntity.ok(respuesta);
             }
@@ -128,7 +129,7 @@ public class AuthController {
                     usuario.setNombre(name);
                     usuario.setCorreo(email);
                     usuario.setPassword(""); // Sin contraseña (inicia sesión con Google)
-                    usuario.setRol("USER");
+                    usuario.setRol("PENDIENTE");
                     usuario = usuarioRepository.save(usuario);
                 }
 
@@ -158,5 +159,20 @@ public class AuthController {
         respuesta.put("mensaje", "Sesión cerrada correctamente");
 
         return ResponseEntity.ok(respuesta);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> obtenerUsuarioActual(HttpSession session) {
+        Usuario usuarioSession = (Usuario) session.getAttribute("usuario");
+        if (usuarioSession == null) {
+            return ResponseEntity.status(401).body("No hay sesión activa");
+        }
+        
+        Optional<Usuario> usuarioDb = usuarioRepository.findById(usuarioSession.getId());
+        if (usuarioDb.isPresent()) {
+            return ResponseEntity.ok(usuarioDb.get());
+        }
+        
+        return ResponseEntity.status(401).body("Usuario no encontrado en DB");
     }
 }

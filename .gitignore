@@ -1,0 +1,8 @@
+# Configuraciones de IDE locales (IntelliJ IDEA, WebStorm, VS Code, etc.)
+.idea/
+.vscode/
+*.iml
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

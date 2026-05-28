@@ -49,7 +49,7 @@ const handleOverlayClick = (e) => {
       
       <!-- Fondo oscuro desenfocado -->
       <div 
-        class="modal-overlay absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        class="modal-overlay absolute inset-0 bg-slate-900/40 backdrop-blur-md"
         @click="handleOverlayClick"
       ></div>
 
@@ -104,28 +104,49 @@ const handleOverlayClick = (e) => {
 /* Animaciones globales compartidas para los modales premium */
 
 /* 1. Transición general del contenedor (Opacidad) */
-.mac-modal-enter-active,
+.mac-modal-enter-active {
+  transition: opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 .mac-modal-leave-active {
-  transition: opacity 0.4s ease;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .mac-modal-enter-from,
 .mac-modal-leave-to {
   opacity: 0;
 }
 
-/* 2. Transición explícita sobre el hijo (Efecto Resorte) */
+/* 2. Transición explícita sobre el overlay (Opacidad y Difuminado) */
+.mac-modal-enter-active .modal-overlay {
+  transition: backdrop-filter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mac-modal-leave-active .modal-overlay {
+  transition: backdrop-filter 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mac-modal-enter-from .modal-overlay,
+.mac-modal-leave-to .modal-overlay {
+  backdrop-filter: blur(0px);
+  opacity: 0;
+}
+
+/* 3. Transición explícita sobre la caja del modal (Efecto Resorte) */
 .mac-modal-enter-active .modal-box {
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .mac-modal-leave-active .modal-box {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mac-modal-enter-from .modal-box {
   transform: scale(0.9) translateY(30px);
+  opacity: 0;
 }
 .mac-modal-leave-to .modal-box {
   transform: scale(0.95) translateY(10px);
+  opacity: 0;
 }
 
 /* Soporte de perspectiva */

@@ -1,22 +1,58 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import ProfileModal from '../components/ProfileModal.vue'
 
 const router = useRouter()
 const userName = ref('')
+const userRole = ref('')
+const showProfileModal = ref(false)
+const isMandatory = ref(false)
+const isProfileModalMandatory = ref(false)
+const isLoaded = ref(false)
+const usuario = ref({})
 
 // Al cargar la página, leemos la "sesión" (localStorage)
-onMounted(() => {
+onMounted(async () => {
   const storedName = localStorage.getItem('user_name')
+  const storedRole = localStorage.getItem('user_role')
+  
   if (storedName) {
     userName.value = storedName
   } else {
     userName.value = 'Usuario'
   }
+  if (storedRole) {
+    userRole.value = storedRole
+  }
+
+  try {
+    const response = await fetch('http://localhost:8080/api/auth/me', {
+      credentials: 'include'
+    })
+    
+    if (response.ok) {
+      usuario.value = await response.json()
+      
+      // Validación ineludible
+      if (usuario.value.rol === 'ALUMNO' && (!usuario.value.matricula || !usuario.value.nombre)) {
+        showProfileModal.value = true
+        isMandatory.value = true
+      } else if (usuario.value.rol === 'DOCENTE' && !usuario.value.nombre) {
+        showProfileModal.value = true
+        isMandatory.value = true
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error)
+  }
 })
 
-// La función de cerrar sesión ahora vive en el MainNavbar global,
-// pero mantenemos userName por si el Dashboard quiere mostrar un mensaje de bienvenida gigante en el centro.
+const onProfileSaved = (data) => {
+  localStorage.setItem('user_matricula', data.matricula)
+  localStorage.setItem('user_name', data.nombre)
+  showProfileModal.value = false
+}
 </script>
 
 <template>
@@ -38,5 +74,13 @@ onMounted(() => {
         </div>
       </div>
     </main>
+
+    <!-- Modal Ineludible de Perfil -->
+    <ProfileModal 
+      :is-open="showProfileModal" 
+      :mandatory="isMandatory"
+      @profile-updated="onProfileSaved" 
+      @close="showProfileModal = false"
+    />
   </div>
 </template>
